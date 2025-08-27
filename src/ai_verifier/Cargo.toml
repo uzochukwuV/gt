@@ -1,0 +1,37 @@
+[package]
+name = "ai_verifier"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+# Core ICP dependencies
+ic-cdk = "0.17"
+ic-cdk-macros = "0.17"
+ic-stable-structures = "0.6"
+candid = "0.10"
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Cryptography and utilities
+sha2 = "0.10"
+hex = "0.4"
+base64 = "0.22"
+time = { version = "0.3", features = ["serde"] }
+getrandom = { version = "0.2", features = ["custom"] }
+# Ensure uuid uses the same getrandom version
+rand = "0.8"
+
+# HTTP and networking
+ic-http-certification = "2.0"
+
+# External integrations (these would be replaced with real implementations)
+# b3_utils = { git = "https://github.com/B3Pay/b3_utils.git", features = ["ledger", "memory"] }
+# evm-rpc-canister-types = { git = "https://github.com/internet-computer-protocol/evm-rpc-canister.git" }
+# ic-llm = { path = "../ic-llm" } # Local implementation needed
+
+# For now, we'll comment these out and implement our own versions

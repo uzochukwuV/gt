@@ -1,0 +1,17 @@
+// Simplified AI Verifier Interface for Deployment
+type AIVerificationResult = record {
+  request_id : text;
+  fraud_score : float64;
+  confidence_level : float64;
+  human_review_required : bool;
+  processed_at : nat64;
+};
+
+type Result = variant { Ok : text; Err : text };
+type Result_1 = variant { Ok : AIVerificationResult; Err : text };
+
+service : {
+  submit_asset_verification_request : (text, text, text, text, principal) -> (Result);
+  get_asset_verification_result : (text) -> (Result_1) query;
+  get_canister_status : () -> (Result) query;
+}

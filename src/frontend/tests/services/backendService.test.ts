@@ -1,64 +1,65 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { backendService } from "../../src/services/backendService";
-import { backend } from "../../../declarations/backend";
 
-// Mock the backend canister
+// Mock the backend module
 vi.mock("../../../declarations/backend", () => ({
   backend: {
-    greet: vi.fn().mockResolvedValue("Hello, Test User!"),
-    get_count: vi.fn().mockResolvedValue(BigInt(42)),
-    increment: vi.fn().mockResolvedValue(BigInt(43)),
-    prompt: vi.fn().mockResolvedValue("This is a mock LLM response"),
+    create_identity: vi.fn(),
+    get_identity: vi.fn(),
+    get_my_identities: vi.fn(),
+    add_credential: vi.fn(),
+    link_wallet: vi.fn(),
+    update_reputation: vi.fn(),
+    get_identity_stats: vi.fn(),
   },
 }));
 
 describe("backendService", () => {
   beforeEach(() => {
-    // Clear all mocks before each test
     vi.clearAllMocks();
   });
 
-  describe("greet", () => {
-    it("should call backend.greet with the provided name", async () => {
-      // Execute
-      const result = await backendService.greet("Test User");
+  describe("createIdentity", () => {
+    it("should create identity successfully", async () => {
+      const mockIdentityId = "gt_id_123456";
+      const { backend } = await import("../../../declarations/backend");
 
-      // Assert
-      expect(backend.greet).toHaveBeenCalledWith("Test User");
-      expect(result).toBe("Hello, Test User!");
+      (backend.create_identity as any).mockResolvedValue({
+        Ok: mockIdentityId,
+      });
+
+      const privacy_settings = {
+        default_privacy_level: { Private: null },
+        public_credentials: [],
+        cross_chain_visibility: [],
+      };
+
+      const result = await backendService.createIdentity(
+        null,
+        [],
+        privacy_settings,
+      );
+
+      expect(result).toBe(mockIdentityId);
+      expect(backend.create_identity).toHaveBeenCalledWith(
+        [],
+        [],
+        privacy_settings,
+      );
     });
   });
 
-  describe("getCount", () => {
-    it("should call backend.get_count", async () => {
-      // Execute
-      const result = await backendService.getCount();
+  describe("getIdentityStats", () => {
+    it("should return identity statistics", async () => {
+      const { backend } = await import("../../../declarations/backend");
+      const mockStats = [100n, 75n]; // total, verified
 
-      // Assert
-      expect(backend.get_count).toHaveBeenCalled();
-      expect(result).toBe(BigInt(42));
-    });
-  });
+      (backend.get_identity_stats as any).mockResolvedValue(mockStats);
 
-  describe("incrementCounter", () => {
-    it("should call backend.increment", async () => {
-      // Execute
-      const result = await backendService.incrementCounter();
+      const result = await backendService.getIdentityStats();
 
-      // Assert
-      expect(backend.increment).toHaveBeenCalled();
-      expect(result).toBe(BigInt(43));
-    });
-  });
-
-  describe("sendLlmPrompt", () => {
-    it("should call backend.prompt with the provided prompt", async () => {
-      // Execute
-      const result = await backendService.sendLlmPrompt("Test prompt");
-
-      // Assert
-      expect(backend.prompt).toHaveBeenCalledWith("Test prompt");
-      expect(result).toBe("This is a mock LLM response");
+      expect(result).toEqual({ total: 100n, verified: 75n });
+      expect(backend.get_identity_stats).toHaveBeenCalled();
     });
   });
 });

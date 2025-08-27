@@ -1,5 +1,8 @@
 [workspace]
 members = [
-    "src/backend"
+    "src/backend",
+    "src/ai_verifier",
+    "src/marketplace", 
+    "src/lending"
 ]
 resolver = "2"

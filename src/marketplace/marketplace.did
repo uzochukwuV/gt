@@ -1,0 +1,117 @@
+type AssetType = variant {
+  RealEstate;
+  AcademicCredential;
+  ProfessionalLicense;
+  IntellectualProperty;
+  Collectible;
+  Identity;
+  Other : text;
+};
+
+type VerificationStatus = variant {
+  Pending;
+  Verified;
+  Rejected;
+  UnderReview;
+};
+
+type CrossChainNetwork = variant {
+  Bitcoin;
+  Ethereum;
+  ICP;
+  Solana;
+  Other : text;
+};
+
+type PaymentMethod = variant {
+  ICP;
+  Bitcoin;
+  Ethereum;
+  USDC;
+  USDT;
+  Other : text;
+};
+
+type ListingType = variant {
+  Sale;
+  Auction;
+  Rental;
+  Collateral;
+};
+
+type OrderStatus = variant {
+  Pending;
+  EscrowDeposited;
+  Completed;
+  Cancelled;
+  Disputed;
+};
+
+type VerifiedAsset = record {
+  id : nat64;
+  owner : principal;
+  asset_type : AssetType;
+  title : text;
+  description : text;
+  verification_status : VerificationStatus;
+  verification_score : float32;
+  metadata_uri : text;
+  cross_chain_anchors : vec record { CrossChainNetwork; text };
+  value_usd : opt float64;
+  created_at : nat64;
+  last_updated : nat64;
+  verification_documents : vec text;
+  ai_validation_report : opt text;
+};
+
+type MarketplaceListing = record {
+  id : nat64;
+  asset_id : nat64;
+  seller : principal;
+  price : float64;
+  payment_method : PaymentMethod;
+  listing_type : ListingType;
+  is_active : bool;
+  created_at : nat64;
+  expires_at : opt nat64;
+  minimum_verification_score : float32;
+  cross_chain_settlement : opt CrossChainNetwork;
+};
+
+type Order = record {
+  id : nat64;
+  listing_id : nat64;
+  buyer : principal;
+  seller : principal;
+  amount : float64;
+  payment_method : PaymentMethod;
+  status : OrderStatus;
+  created_at : nat64;
+  escrow_address : opt text;
+  settlement_tx_hash : opt text;
+};
+
+type MarketplaceStats = record {
+  total_assets : nat64;
+  active_listings : nat64;
+  total_orders : nat64;
+  completed_orders : nat64;
+  total_volume_usd : float64;
+};
+
+type Result_1 = variant { Ok : nat64; Err : text };
+type Result_2 = variant { Ok; Err : text };
+
+service : {
+  create_listing : (nat64, float64, PaymentMethod, ListingType, opt nat64, float32, opt CrossChainNetwork) -> (Result_1);
+  create_order : (nat64, float64) -> (Result_1);
+  complete_cross_chain_settlement : (nat64, text) -> (Result_2);
+  get_asset : (nat64) -> (opt VerifiedAsset) query;
+  get_listing : (nat64) -> (opt MarketplaceListing) query;
+  get_order : (nat64) -> (opt Order) query;
+  get_listings : (opt nat32, opt nat32, opt AssetType, opt PaymentMethod, opt float32) -> (vec record { MarketplaceListing; VerifiedAsset }) query;
+  get_user_listings : (principal) -> (vec MarketplaceListing) query;
+  get_user_orders : (principal) -> (vec Order) query;
+  get_marketplace_stats : () -> (MarketplaceStats) query;
+  register_verified_asset : (VerifiedAsset) -> (Result_1);
+}

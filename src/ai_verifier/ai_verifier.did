@@ -1,0 +1,433 @@
+type AIServiceConfig = record {
+  region : text;
+  base_url : text;
+  service_name : text;
+  supported_types : vec AIVerificationType;
+  api_key : text;
+  model_capabilities : ModelCapabilities;
+  pricing : ServicePricing;
+  service_id : text;
+  is_active : bool;
+  rate_limits : RateLimits;
+  quality_metrics : ServiceQualityMetrics;
+};
+type AIVerificationResult = record {
+  request_id : text;
+  model_info : ModelInfo;
+  recommendations : vec text;
+  quality_score : float64;
+  detailed_analysis : DetailedAnalysis;
+  processing_time_ms : nat64;
+  risk_factors : vec RiskFactor;
+  verification_type : AIVerificationType;
+  identity_id : text;
+  processed_at : nat64;
+  fraud_score : float64;
+  human_review_required : bool;
+  asset_id : opt text;
+  confidence_level : float64;
+  expires_at : nat64;
+};
+type AIVerificationType = variant {
+  DocumentAuthenticity;
+  SyntheticMediaDetection;
+  AssetValuation;
+  IdentityFraudDetection;
+  RiskAssessment;
+  RegulatorAudit;
+  BehavioralAnalysis;
+  CrossChainAssetVerification;
+  BiometricLiveness;
+  ComplianceCheck;
+};
+type AccuracyMetrics = record {
+  f1_score : float64;
+  sensitivity : float64;
+  precision : float64;
+  auc_roc : float64;
+  specificity : float64;
+  recall : float64;
+};
+type AssetAnalysis = record {
+  market_comparison_score : float64;
+  authenticity_indicators : vec text;
+  risk_indicators : vec text;
+  provenance_verification : ProvenanceVerification;
+  valuation_confidence : float64;
+  market_analysis : MarketAnalysis;
+};
+type BehavioralAnalysis = record {
+  device_fingerprinting : DeviceFingerprinting;
+  velocity_analysis : VelocityAnalysis;
+  session_analysis : SessionAnalysis;
+  activity_pattern_score : float64;
+  anomaly_detection_score : float64;
+  consistency_score : float64;
+};
+type BiometricAnalysis = record {
+  presentation_attack_score : float64;
+  spoofing_detected : bool;
+  quality_score : float64;
+  modality_scores : vec record { text; float64 };
+  liveness_score : float64;
+  matching_confidence : float64;
+  template_uniqueness : float64;
+};
+type BulkDiscount = record {
+  min_requests : nat32;
+  discount_percentage : float64;
+};
+type CommunityAnalysis = record {
+  community_id : text;
+  role_in_community : text;
+  community_risk_score : float64;
+  influence_score : float64;
+};
+type ComparableAsset = record {
+  sale_date : nat64;
+  recent_sale_price : float64;
+  asset_id : text;
+  similarity_score : float64;
+};
+type ComplianceCheck = record {
+  data_retention_policy : text;
+  pii_detected : vec PIIDetection;
+  gdpr_compliant : bool;
+  regulatory_flags : vec text;
+};
+type ComplianceFlag = record {
+  flag_type : text;
+  description : text;
+  deadline : opt nat64;
+  regulatory_framework : text;
+  severity : RiskLevel;
+  action_required : text;
+};
+type ContentAnalysis = record {
+  sentiment_score : float64;
+  content_type : text;
+  language : text;
+  entities : vec Entity;
+  topics : vec text;
+  suspicious_patterns : vec text;
+};
+type CrossReferenceAnalysis = record {
+  conflicting_information : vec text;
+  consistency_score : float64;
+  verification_sources : vec VerificationSource;
+  identity_matches : vec IdentityMatch;
+};
+type DetailedAnalysis = record {
+  temporal_analysis : opt TemporalAnalysis;
+  cross_reference_results : opt CrossReferenceAnalysis;
+  behavioral_patterns : opt BehavioralAnalysis;
+  network_analysis : opt NetworkAnalysis;
+  biometric_analysis : opt BiometricAnalysis;
+  compliance_flags : vec ComplianceFlag;
+  asset_analysis : opt AssetAnalysis;
+  document_authenticity : opt DocumentAnalysis;
+};
+type DeviceFingerprinting = record {
+  device_known : bool;
+  suspicious_characteristics : vec text;
+  device_trust_score : float64;
+  risk_indicators : vec text;
+};
+type DocumentAnalysis = record {
+  anomalies : vec text;
+  ocr_confidence : float64;
+  document_type_confidence : float64;
+  tampering_detected : bool;
+  quality_score : float64;
+  issuer_verification : IssuerVerification;
+  security_features : vec text;
+  authenticity_score : float64;
+};
+type DocumentStructure = record {
+  images_count : nat32;
+  text_blocks : vec TextBlock;
+  pages : nat32;
+  tables_count : nat32;
+  sections : vec text;
+};
+type DynamicPricing = record {
+  quality_premium : float64;
+  demand_multiplier : float64;
+  enabled : bool;
+  complexity_multiplier : float64;
+};
+type Entity = record {
+  name : text;
+  risk_level : RiskLevel;
+  entity_type : text;
+  confidence : float64;
+};
+type ExtractedFileData = record {
+  metadata : vec record { text; text };
+  image_features : opt ImageFeatures;
+  text_content : opt text;
+  document_structure : opt DocumentStructure;
+};
+type FileAIAnalysis = record {
+  security_assessment : SecurityAssessment;
+  content_analysis : ContentAnalysis;
+  manipulation_detected : bool;
+  compliance_check : ComplianceCheck;
+  authenticity_score : float64;
+};
+type FileProcessingRecord = record {
+  size : nat64;
+  extracted_data : opt ExtractedFileData;
+  file_type : text;
+  upload_time : nat64;
+  original_name : text;
+  processing_status : FileProcessingStatus;
+  ai_analysis : opt FileAIAnalysis;
+  file_id : text;
+};
+type FileProcessingStatus = variant {
+  Failed : text;
+  Uploaded;
+  Analyzed;
+  Processing;
+};
+type FontInfo = record {
+  font_name : text;
+  font_size : float64;
+  is_italic : bool;
+  is_bold : bool;
+};
+type FraudAnalytics = record {
+  false_negatives : nat32;
+  false_positives : nat32;
+  total_requests : nat32;
+  average_fraud_score : float64;
+  analytics_id : text;
+  time_period : nat64;
+  fraud_detected : nat32;
+  model_performance : ModelPerformanceMetrics;
+  trend_analysis : vec text;
+};
+type HttpRequest = record {
+  url : text;
+  method : text;
+  body : blob;
+  headers : vec record { text; text };
+};
+type HttpResponse = record {
+  body : blob;
+  headers : vec record { text; text };
+  upgrade : opt bool;
+  status_code : nat16;
+};
+type IdentityMatch = record {
+  source : text;
+  verified_attributes : vec text;
+  conflicting_attributes : vec text;
+  match_confidence : float64;
+};
+type ImageFeatures = record {
+  color_profile : text;
+  quality_score : float64;
+  faces_detected : nat32;
+  objects_detected : vec text;
+  dimensions : record { nat32; nat32 };
+};
+type IssuerVerification = record {
+  digital_signature_valid : bool;
+  issuer_reputation : float64;
+  certificate_chain_valid : bool;
+  issuer_verified : bool;
+};
+type MarketAnalysis = record {
+  comparable_assets : vec ComparableAsset;
+  market_volatility : float64;
+  current_market_value : float64;
+  value_trend : float64;
+};
+type ModelCapabilities = record {
+  processing_speed : ProcessingSpeed;
+  supported_formats : vec text;
+  accuracy_benchmarks : vec record { text; float64 };
+  max_input_size : nat32;
+};
+type ModelInfo = record {
+  model_version : text;
+  model_name : text;
+  model_type : ModelType;
+  training_date : nat64;
+  accuracy_metrics : AccuracyMetrics;
+  ensemble_models : vec text;
+};
+type ModelPerformanceMetrics = record {
+  performance_trend : vec PerformancePoint;
+  drift_score : float64;
+  average_processing_time_ms : nat64;
+  model_id : text;
+  accuracy_metrics : AccuracyMetrics;
+  requests_processed : nat32;
+  last_retrained : nat64;
+};
+type ModelType = variant { CNN; LLM; RNN; SVM; RandomForest; HybridAI };
+type NetworkAnalysis = record {
+  suspicious_connections : vec text;
+  community_analysis : CommunityAnalysis;
+  network_centrality : float64;
+  connection_risk_score : float64;
+};
+type OwnershipRecord = record {
+  from_date : nat64;
+  to_date : opt nat64;
+  owner : text;
+  verification_method : text;
+  confidence : float64;
+};
+type PIIDetection = record {
+  pii_type : text;
+  sensitivity_level : text;
+  confidence : float64;
+  location : text;
+};
+type PerformancePoint = record {
+  processing_time_ms : nat64;
+  timestamp : nat64;
+  throughput : float64;
+  accuracy : float64;
+};
+type ProcessingSpeed = variant { Fast; Medium; Slow; RealTime };
+type ProvenanceVerification = record {
+  ownership_chain_valid : bool;
+  historical_ownership : vec OwnershipRecord;
+  chain_of_custody_score : float64;
+  authenticity_certificates : vec text;
+};
+type QueueInfo = record {
+  processing_capacity : nat32;
+  queue_position : nat32;
+  estimated_wait_time : nat64;
+  ahead_in_queue : nat32;
+};
+type RateLimits = record {
+  requests_per_minute : nat32;
+  concurrent_requests : nat32;
+  data_transfer_limit_mb : nat32;
+  requests_per_hour : nat32;
+};
+type Result = variant { Ok; Err : text };
+type Result_1 = variant { Ok : nat32; Err : text };
+type Result_2 = variant { Ok : nat64; Err : text };
+type Result_3 = variant { Ok : AIVerificationResult; Err : text };
+type Result_4 = variant { Ok : VerificationStatus; Err : text };
+type Result_5 = variant { Ok : text; Err : text };
+type Result_6 = variant { Ok : FileProcessingRecord; Err : text };
+type Result_7 = variant { Ok : FraudAnalytics; Err : text };
+type Result_8 = variant { Ok : QueueInfo; Err : text };
+type Result_9 = variant { Ok : bool; Err : text };
+type RiskFactor = record {
+  mitigation_suggestions : vec text;
+  impact_score : float64;
+  factor_type : text;
+  description : text;
+  evidence : vec text;
+  severity : RiskLevel;
+  confidence : float64;
+  likelihood : float64;
+};
+type RiskLevel = variant { Low; High; Medium; Critical };
+type RiskSeverity = variant { Low; High; Medium; Critical };
+type SeasonalPattern = record {
+  expected_behavior : text;
+  seasonality_score : float64;
+  pattern_type : text;
+  deviation_score : float64;
+};
+type SecurityAssessment = record {
+  encryption_status : text;
+  phishing_indicators : vec text;
+  data_leakage_risk : float64;
+  malware_score : float64;
+};
+type ServicePricing = record {
+  dynamic_pricing : DynamicPricing;
+  base_cost_per_request : nat64;
+  bulk_discounts : vec BulkDiscount;
+  premium_multiplier : float64;
+};
+type ServiceQualityMetrics = record {
+  average_response_time_ms : nat64;
+  throughput_per_hour : nat32;
+  last_updated : nat64;
+  uptime_percentage : float64;
+  accuracy_score : float64;
+  error_rate : float64;
+};
+type SessionAnalysis = record {
+  interaction_pattern_score : float64;
+  session_duration_score : float64;
+  device_consistency : float64;
+  geographical_consistency : float64;
+};
+type TemporalAnalysis = record {
+  seasonal_patterns : vec SeasonalPattern;
+  time_series_anomalies : vec text;
+  trend_analysis : TrendAnalysis;
+};
+type TextBlock = record {
+  font_info : opt FontInfo;
+  content : text;
+  position : record { float64; float64; float64; float64 };
+  confidence : float64;
+};
+type TrendAnalysis = record {
+  forecast_confidence : float64;
+  trend_strength : float64;
+  trend_direction : text;
+  change_points : vec nat64;
+};
+type VelocityAnalysis = record {
+  transaction_velocity : float64;
+  login_velocity : float64;
+  unusual_patterns : vec text;
+  api_call_velocity : float64;
+  time_based_anomalies : vec text;
+};
+type VerificationSource = record {
+  last_updated : nat64;
+  source_name : text;
+  source_type : text;
+  reliability_score : float64;
+};
+type VerificationStatus = variant {
+  Queued;
+  Failed : text;
+  AIAnalyzing;
+  Processing;
+  Completed;
+  Pending;
+};
+service : () -> {
+  add_ai_service : (AIServiceConfig) -> (Result);
+  cleanup_expired_results : () -> (Result_1);
+  emergency_stop_processing : () -> (Result);
+  estimate_verification_cost : (text, text, nat32) -> (Result_2) query;
+  get_ai_services : () -> (vec AIServiceConfig) query;
+  get_asset_verification_result : (text) -> (Result_3) query;
+  get_asset_verification_status : (text) -> (Result_4) query;
+  get_canister_status : () -> (Result_5);
+  get_file_processing_status : (text) -> (Result_6) query;
+  get_fraud_analytics : (text) -> (Result_7) query;
+  get_queue_info : () -> (Result_8) query;
+  get_supported_verification_types : () -> (vec text) query;
+  get_verification_result : (text) -> (Result_3) query;
+  get_verification_status : (text) -> (Result_4) query;
+  http_request : (HttpRequest) -> (HttpResponse) query;
+  process_icrc1_payment : (text, nat) -> (Result_5);
+  reprocess_failed_verification : (text) -> (Result);
+  submit_asset_verification_request : (text, text, text, text, principal) -> (
+      Result_5,
+    );
+  update_model_metrics : () -> (Result);
+  update_service_status : (text, bool) -> (Result);
+  upload_file_for_verification : (blob, text, text) -> (Result_5);
+  verify_payment : (text) -> (Result_9);
+}

@@ -1,21 +1,325 @@
-type AssistantMessage = record {
-  content : opt text;
-  tool_calls : vec ToolCall;
+type AMLStatus = variant {
+  Blocked;
+  PendingReview;
+  Cleared;
+  Flagged;
+  NotScreened;
 };
-type ChatMessage = variant {
-  tool : record { content : text; tool_call_id : text };
-  user : record { content : text };
-  assistant : AssistantMessage;
-  system : record { content : text };
+type AssetVerification = record {
+  ai_request_id : opt text;
+  verification_status : text;
+  verification_requested_at : nat64;
+  identity_id : text;
+  fraud_score : opt float64;
+  human_review_required : bool;
+  asset_id : text;
+  confidence_level : opt float64;
+  verification_completed_at : opt nat64;
 };
-type FunctionCall = record { name : text; arguments : vec ToolCallArgument };
-type ToolCall = record { id : text; function : FunctionCall };
-type ToolCallArgument = record { value : text; name : text };
-service : {
-  chat : (vec ChatMessage) -> (text);
-  get_count : () -> (nat64) query;
-  greet : (text) -> (text) query;
-  increment : () -> (nat64);
-  prompt : (text) -> (text);
-  set_count : (nat64) -> (nat64);
+type AuditDetails = record {
+  compliance_notes : opt text;
+  operation_specific_data : text;
+  sensitive_data_redacted : bool;
+  related_entities : vec text;
+};
+type AuditEntry = record {
+  id : text;
+  result : OperationResult;
+  "principal" : principal;
+  resource_type : text;
+  operation : AuditOperation;
+  timestamp : nat64;
+  resource_id : text;
+  details : AuditDetails;
+};
+type AuditOperation = variant {
+  CrossChainVerification;
+  UnlinkAsset;
+  LinkAsset;
+  LinkWallet;
+  ComplianceUpdate;
+  UpdateIdentity;
+  CreateIdentity;
+  UnlinkWallet;
+  AddCredential;
+  RevokeCredential;
+  AIVerification;
+};
+type ChainType = variant {
+  ICP;
+  Ethereum;
+  Solana;
+  Custom : record { name : text; chain_id : nat64 };
+  Bitcoin;
+  Polygon;
+  Avalanche;
+};
+type ComplianceStatus = record {
+  aml_status : AMLStatus;
+  sanctions_check : SanctionsStatus;
+  last_updated : nat64;
+  jurisdiction : text;
+  compliance_documents : vec text;
+  kyc_level : KYCLevel;
+};
+type CredentialClaims = variant {
+  Selective : vec SelectiveClaim;
+  Private : text;
+  Public : vec PublicClaim;
+};
+type CredentialIssuer = record {
+  id : principal;
+  did : opt text;
+  name : text;
+  reputation_score : float64;
+};
+type CredentialStatus = variant { Active; Suspended; Revoked; Expired };
+type CredentialType = variant {
+  Academic;
+  Professional;
+  Financial;
+  Custom : text;
+  Digital;
+  Government;
+};
+type CrossChainSignature = record {
+  signature : text;
+  public_key : text;
+  signature_type : SignatureType;
+  created_at : nat64;
+  verification_status : SignatureVerificationStatus;
+  verified_at : opt nat64;
+  message_hash : text;
+  chain_type : ChainType;
+};
+type CrossChainVisibility = record {
+  visibility_level : PrivacyLevel;
+  chain_name : text;
+  visible_credentials : vec text;
+};
+type CryptographicProof = record {
+  created : nat64;
+  signature : text;
+  public_key : text;
+  proof_type : ProofType;
+};
+type DisclosurePolicy = record {
+  expiry_date : opt nat64;
+  authorized_requesters : vec principal;
+  disclosure_conditions : vec text;
+};
+type Identity = record {
+  id : text;
+  did : text;
+  reputation_history : vec ReputationEvent;
+  risk_assessment : RiskAssessment;
+  compliance_status : ComplianceStatus;
+  updated_at : nat64;
+  internet_identity_anchor : opt nat64;
+  owner : principal;
+  created_at : nat64;
+  linked_assets : vec text;
+  verification_status : VerificationStatus;
+  credentials : vec VerifiableCredential;
+  last_activity : nat64;
+  cross_chain_signatures : vec CrossChainSignature;
+  linked_wallets : vec LinkedWallet;
+  reputation_score : float64;
+  privacy_settings : PrivacySettings;
+};
+type KYCLevel = variant { Enhanced; Premium; None; Basic };
+type LinkedWallet = record {
+  verification_status : WalletVerificationStatus;
+  linked_at : nat64;
+  address : text;
+  chain_type : ChainType;
+};
+type OperationResult = variant {
+  SecurityBlocked : text;
+  PartialSuccess : text;
+  Success;
+  RateLimited;
+  Failure : text;
+};
+type PrivacyLevel = variant { Private; Confidential; Public; Restricted };
+type PrivacySettings = record {
+  public_credentials : vec text;
+  default_privacy_level : PrivacyLevel;
+  cross_chain_visibility : vec CrossChainVisibility;
+};
+type ProofType = variant { Ed25519Signature; EcdsaSecp256k1Signature };
+type PublicClaim = record {
+  claim_value : text;
+  verification_method : text;
+  claim_type : text;
+};
+type ReputationEvent = record {
+  score_change : float64;
+  verified_by : opt principal;
+  timestamp : nat64;
+  event_type : ReputationEventType;
+  reason : text;
+};
+type ReputationEventType = variant {
+  FraudReported;
+  SuccessfulTransaction;
+  CredentialIssued;
+  AssetVerified;
+  SystemAction;
+  ComplianceViolation;
+};
+type Result = variant { Ok; Err : text };
+type Result_1 = variant { Ok : text; Err : text };
+type Result_2 = variant { Ok : AssetVerification; Err : text };
+type Result_3 = variant { Ok : vec AuditEntry; Err : text };
+type Result_4 = variant { Ok : ComplianceStatus; Err : text };
+type Result_5 = variant { Ok : Identity; Err : text };
+type Result_6 = variant { Ok : RiskAssessment; Err : text };
+type RiskAssessment = record {
+  fraud_risk : float64;
+  assessment_model_version : text;
+  operational_risk : float64;
+  risk_factors : vec RiskFactor;
+  compliance_risk : float64;
+  overall_risk_score : float64;
+  last_assessment : nat64;
+};
+type RiskFactor = record {
+  weight : float64;
+  mitigation_suggestions : vec text;
+  factor_type : text;
+  description : text;
+  score : float64;
+};
+type SanctionsStatus = variant { Sanctioned; UnderReview; Cleared; NotChecked };
+type SelectiveClaim = record {
+  claim_type : text;
+  disclosure_policy : DisclosurePolicy;
+  proof_reference : text;
+};
+type SignatureType = variant { BLS; Schnorr; ECDSA; EdDSA };
+type SignatureVerificationStatus = variant {
+  Failed : text;
+  Verified;
+  Expired;
+  Pending;
+};
+type VerifiableCredential = record {
+  id : text;
+  claims : CredentialClaims;
+  status : CredentialStatus;
+  subject : principal;
+  issuer : CredentialIssuer;
+  expiration_date : opt nat64;
+  proof : CryptographicProof;
+  issuance_date : nat64;
+  credential_type : CredentialType;
+};
+type VerificationStatus = variant {
+  Suspended;
+  Rejected : text;
+  PartiallyVerified;
+  InProgress;
+  Verified;
+  Pending;
+};
+type WalletVerificationStatus = variant { Failed : text; Verified; Pending };
+type BridgeRequest = record {
+  request_id : text;
+  from_chain : ChainType;
+  to_chain : ChainType;
+  asset_type : text;
+  amount : nat64;
+  from_address : text;
+  to_address : text;
+  user_principal : principal;
+  status : BridgeStatus;
+  created_at : nat64;
+  completed_at : opt nat64;
+  transaction_hashes : vec text;
+};
+type BridgeStatus = variant {
+  Initiated;
+  SourceLocked;
+  TargetMinting;
+  Completed;
+  Failed : record { reason : text };
+  Cancelled;
+};
+type ChainConfig = record {
+  chain_type : ChainType;
+  rpc_url : text;
+  bridge_contract : text;
+  supported_assets : vec text;
+  min_amount : nat64;
+  max_amount : nat64;
+  fee_percentage : float64;
+  confirmation_blocks : nat32;
+};
+type BridgeFee = record {
+  amount : nat64;
+  percentage : float64;
+  fixed_fee : nat64;
+};
+type FileUploadRequest = record {
+  original_name : text;
+  mime_type : text;
+  data : vec nat8;
+  asset_id : opt text;
+  identity_id : opt text;
+  tags : vec text;
+};
+type FileUploadResponse = record {
+  file_id : text;
+  url : opt text;
+};
+type FileMetadata = record {
+  file_id : text;
+  original_name : text;
+  mime_type : text;
+  size : nat64;
+  uploaded_by : principal;
+  uploaded_at : nat64;
+  asset_id : opt text;
+  identity_id : opt text;
+  file_hash : text;
+  is_public : bool;
+  tags : vec text;
+};
+type Result_7 = variant { Ok : text; Err : text };
+type Result_8 = variant { Ok : BridgeRequest; Err : text };
+type Result_9 = variant { Ok : FileUploadResponse; Err : text };
+type Result_10 = variant { Ok : FileMetadata; Err : text };
+type Result_11 = variant { Ok : vec FileMetadata; Err : text };
+type Result_12 = variant { Ok : vec nat8; Err : text };
+service : () -> {
+  add_credential : (text, VerifiableCredential) -> (Result);
+  create_identity : (opt nat64, vec VerifiableCredential, PrivacySettings) -> (
+      Result_1,
+    );
+  get_asset_verification_status : (text) -> (Result_2) query;
+  get_audit_trail : (text, opt nat32, opt nat32) -> (Result_3) query;
+  get_compliance_status : (text) -> (Result_4) query;
+  get_identity : (text) -> (Result_5) query;
+  get_identity_stats : () -> (nat64, nat64) query;
+  get_my_identities : () -> (vec Identity) query;
+  get_risk_assessment : (text) -> (Result_6) query;
+  link_asset : (text, text) -> (Result);
+  link_asset_with_verification : (text, text, text, text) -> (Result_1);
+  link_wallet : (text, ChainType, text) -> (Result);
+  link_wallet_verified : (text, ChainType, text, text, text) -> (Result);
+  update_asset_verification_result : (text) -> (Result_2);
+  update_reputation : (text, float64, text) -> (Result);
+  initiate_cross_chain_bridge : (ChainType, ChainType, text, nat64, text, text) -> (Result_7);
+  get_bridge_request : (text) -> (Result_8) query;
+  get_user_bridge_history : () -> (vec BridgeRequest) query;
+  update_bridge_status : (text, BridgeStatus, opt text) -> (Result_7);
+  calculate_bridge_fee : (ChainType, nat64) -> (BridgeFee) query;
+  get_supported_chains : () -> (vec ChainConfig) query;
+  upload_file : (FileUploadRequest) -> (Result_9);
+  get_file_metadata : (text) -> (Result_10) query;
+  get_user_files : () -> (vec FileMetadata) query;
+  get_asset_files : (text) -> (Result_11) query;
+  delete_file : (text) -> (Result_7);
+  download_file : (text) -> (Result_12) query;
 }

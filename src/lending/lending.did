@@ -1,0 +1,89 @@
+type AssetType = variant {
+  RealEstate;
+  Vehicle;
+  Artwork;
+  Jewelry;
+  Collectible;
+  Other : text;
+};
+
+type LoanStatus = variant {
+  Pending;
+  Active;
+  Repaid;
+  Defaulted;
+  Liquidated;
+};
+
+type PaymentMethod = variant {
+  ICP;
+  Bitcoin;
+  Ethereum;
+  USDC;
+  USDT;
+};
+
+type CollateralAsset = record {
+  asset_id : text;
+  asset_type : AssetType;
+  verified_value_usd : float64;
+  verification_score : float32;
+  owner : principal;
+  metadata_uri : text;
+};
+
+type Loan = record {
+  id : nat64;
+  borrower : principal;
+  lender : principal;
+  collateral_asset : CollateralAsset;
+  loan_amount_usd : float64;
+  payment_method : PaymentMethod;
+  interest_rate : float32;
+  duration_days : nat32;
+  status : LoanStatus;
+  created_at : nat64;
+  funded_at : opt nat64;
+  due_date : opt nat64;
+  repaid_at : opt nat64;
+  loan_to_value_ratio : float32;
+  liquidation_threshold : float32;
+};
+
+type LoanOffer = record {
+  id : nat64;
+  lender : principal;
+  max_loan_amount_usd : float64;
+  min_verification_score : float32;
+  max_ltv_ratio : float32;
+  interest_rate : float32;
+  max_duration_days : nat32;
+  accepted_asset_types : vec AssetType;
+  payment_method : PaymentMethod;
+  is_active : bool;
+  created_at : nat64;
+};
+
+type LendingStats = record {
+  total_loans : nat64;
+  active_loans : nat64;
+  total_volume_usd : float64;
+  active_offers : nat64;
+  default_rate : float32;
+};
+
+type Result_1 = variant { Ok : nat64; Err : text };
+type Result_2 = variant { Ok; Err : text };
+
+service : {
+  create_loan_offer : (float64, float32, float32, float32, nat32, vec AssetType, PaymentMethod) -> (Result_1);
+  request_loan : (nat64, text, float64, nat32) -> (Result_1);
+  fund_loan : (nat64) -> (Result_2);
+  repay_loan : (nat64) -> (Result_2);
+  liquidate_loan : (nat64) -> (Result_2);
+  get_loan : (nat64) -> (opt Loan) query;
+  get_loan_offer : (nat64) -> (opt LoanOffer) query;
+  get_active_loan_offers : (opt nat32, opt AssetType) -> (vec LoanOffer) query;
+  get_user_loans : (principal) -> (vec Loan) query;
+  get_lending_stats : () -> (LendingStats) query;
+}

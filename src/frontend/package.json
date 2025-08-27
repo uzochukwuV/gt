@@ -6,12 +6,20 @@
   "description": "Frontend for IC Vibe application",
   "scripts": {
     "start": "vite",
-    "build": "dfx generate && tsc && vite build",
+    "build": "dfx generate && ../../fix-declarations.sh && tsc && vite build",
     "test": "vitest run"
   },
   "dependencies": {
+    "@dfinity/auth-client": "^3.2.2",
+    "@dfinity/ledger-icp": "^4.1.0",
+    "@dfinity/ledger-icrc": "^2.10.0",
+    "@dfinity/utils": "^2.14.0",
+    "@slide-computer/signer": "^3.16.0",
+    "@slide-computer/signer-agent": "^3.16.0",
+    "@slide-computer/signer-web": "^3.16.0",
     "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "react-dom": "^19.1.0",
+    "react-router-dom": "^6.14.2"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.1.7",

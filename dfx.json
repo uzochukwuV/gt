@@ -1,31 +1,38 @@
 {
+  "version": 1,
+  "dfx": "0.18.0",
   "canisters": {
-    "llm": {
-      "type": "pull",
-      "id": "w36hm-eqaaa-aaaal-qr76a-cai"
-    },
     "backend": {
-      "dependencies": ["llm"],
-      "candid": "src/backend/backend.did",
+      "type": "rust",
       "package": "backend",
-      "type": "custom",
-      "shrink": true,
-      "gzip": true,
-      "wasm": "target/wasm32-unknown-unknown/release/backend.wasm",
-      "build": ["bash ./scripts/generate-candid.sh backend"],
-      "metadata": [
-        {
-          "name": "candid:service"
-        }
-      ]
+      "candid": "src/backend/backend.did"
+    },
+    "marketplace": {
+      "type": "rust",
+      "package": "marketplace",
+      "candid": "src/marketplace/marketplace.did"
+    },
+    "lending": {
+      "type": "rust",
+      "package": "lending",
+      "candid": "src/lending/lending.did"
+    },
+    "ai_verifier": {
+      "type": "rust",
+      "package": "ai_verifier",
+      "candid": "src/ai_verifier/ai_verifier_simple.did"
     },
     "frontend": {
-      "dependencies": ["backend"],
+      "dependencies": ["backend", "marketplace", "lending", "ai_verifier"],
       "type": "assets",
-      "source": ["src/frontend/dist/"]
+      "source": ["src/frontend/dist"]
     }
   },
-  "output_env_file": ".env",
-  "version": 1,
-  "dfx": "0.25.0"
+  "defaults": {
+    "build": {
+      "packtool": "npm --prefix src/frontend run build",
+      "args": ""
+    }
+  },
+  "output_env_file": ".env"
 }
