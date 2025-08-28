@@ -1,17 +1,24 @@
 import { useState, useEffect } from "react";
 import Layout from "../components/Layout";
-import { bridgeService, CrossChainTransfer, SupportedChain, BridgeFeeEstimate } from "../services/bridgeService";
+import {
+  bridgeService,
+  CrossChainTransfer,
+  SupportedChain,
+  BridgeFeeEstimate,
+} from "../services/bridgeService";
 
 const CrossChainBridge = () => {
-  const [fromChain, setFromChain] = useState('');
-  const [toChain, setToChain] = useState('');
-  const [assetType, setAssetType] = useState('');
-  const [amount, setAmount] = useState('');
-  const [fromAddress, setFromAddress] = useState('');
-  const [toAddress, setToAddress] = useState('');
+  const [fromChain, setFromChain] = useState("");
+  const [toChain, setToChain] = useState("");
+  const [assetType, setAssetType] = useState("");
+  const [amount, setAmount] = useState("");
+  const [fromAddress, setFromAddress] = useState("");
+  const [toAddress, setToAddress] = useState("");
   const [supportedChains, setSupportedChains] = useState<SupportedChain[]>([]);
   const [bridgeHistory, setBridgeHistory] = useState<CrossChainTransfer[]>([]);
-  const [feeEstimate, setFeeEstimate] = useState<BridgeFeeEstimate | null>(null);
+  const [feeEstimate, setFeeEstimate] = useState<BridgeFeeEstimate | null>(
+    null,
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -37,7 +44,7 @@ const CrossChainBridge = () => {
       const chains = await bridgeService.getSupportedChains();
       setSupportedChains(chains);
     } catch (err) {
-      console.error('Failed to load supported chains:', err);
+      console.error("Failed to load supported chains:", err);
     }
   };
 
@@ -47,7 +54,7 @@ const CrossChainBridge = () => {
       const history = await bridgeService.getUserBridgeHistory();
       setBridgeHistory(history);
     } catch (err) {
-      console.error('Failed to load bridge history:', err);
+      console.error("Failed to load bridge history:", err);
     } finally {
       setIsLoading(false);
     }
@@ -56,10 +63,13 @@ const CrossChainBridge = () => {
   const calculateFee = async () => {
     try {
       const amountBigInt = bridgeService.parseAmount(amount, 8);
-      const fee = await bridgeService.calculateBridgeFee(fromChain, amountBigInt);
+      const fee = await bridgeService.calculateBridgeFee(
+        fromChain,
+        amountBigInt,
+      );
       setFeeEstimate(fee);
     } catch (err) {
-      console.error('Failed to calculate fee:', err);
+      console.error("Failed to calculate fee:", err);
       setFeeEstimate(null);
     }
   };
@@ -70,11 +80,16 @@ const CrossChainBridge = () => {
 
     // Validate inputs
     const validation = bridgeService.validateTransfer(
-      fromChain, toChain, assetType, amount, fromAddress, toAddress
+      fromChain,
+      toChain,
+      assetType,
+      amount,
+      fromAddress,
+      toAddress,
     );
 
     if (!validation.valid) {
-      setError(validation.errors.join(', '));
+      setError(validation.errors.join(", "));
       return;
     }
 
@@ -87,31 +102,37 @@ const CrossChainBridge = () => {
         assetType,
         amountBigInt,
         fromAddress,
-        toAddress
+        toAddress,
       );
 
-      setSuccess(`Bridge request initiated successfully! Request ID: ${requestId.substring(0, 12)}...`);
-      
+      setSuccess(
+        `Bridge request initiated successfully! Request ID: ${requestId.substring(0, 12)}...`,
+      );
+
       // Reset form
-      setFromChain('');
-      setToChain('');
-      setAssetType('');
-      setAmount('');
-      setFromAddress('');
-      setToAddress('');
+      setFromChain("");
+      setToChain("");
+      setAssetType("");
+      setAmount("");
+      setFromAddress("");
+      setToAddress("");
       setFeeEstimate(null);
 
       // Reload history
       loadBridgeHistory();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to initiate bridge transfer');
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to initiate bridge transfer",
+      );
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const getAvailableAssets = (chain: string): string[] => {
-    const chainConfig = supportedChains.find(c => c.type === chain);
+    const chainConfig = supportedChains.find((c) => c.type === chain);
     return chainConfig?.supportedAssets || [];
   };
   return (
@@ -131,7 +152,8 @@ const CrossChainBridge = () => {
                 Cross-Chain Bridge
               </p>
               <p className="text-sm leading-normal font-normal text-[#9cabba]">
-                Bridge assets seamlessly across different blockchains with our secure protocol.
+                Bridge assets seamlessly across different blockchains with our
+                secure protocol.
               </p>
             </div>
           </div>
@@ -142,7 +164,7 @@ const CrossChainBridge = () => {
               <p className="text-red-400">{error}</p>
             </div>
           )}
-          
+
           {success && (
             <div className="mx-4 rounded-lg border border-green-600 bg-green-900/50 p-4">
               <p className="text-green-400">{success}</p>
@@ -152,9 +174,12 @@ const CrossChainBridge = () => {
             Supported Chains
           </h3>
           {supportedChains.map((chain, index) => (
-            <div key={index} className="flex min-h-[72px] items-center justify-between gap-4 bg-[#111418] px-4 py-2">
+            <div
+              key={index}
+              className="flex min-h-[72px] items-center justify-between gap-4 bg-[#111418] px-4 py-2"
+            >
               <div className="flex items-center gap-4">
-                <div className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-[#283039] text-white text-xl">
+                <div className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-[#283039] text-xl text-white">
                   {bridgeService.getChainIcon(chain.type)}
                 </div>
                 <div className="flex flex-col justify-center">
@@ -162,7 +187,8 @@ const CrossChainBridge = () => {
                     {chain.name}
                   </p>
                   <p className="line-clamp-2 text-sm leading-normal font-normal text-[#9cabba]">
-                    Assets: {chain.supportedAssets.join(', ') || 'None'} • Fee: {chain.feePercentage}%
+                    Assets: {chain.supportedAssets.join(", ") || "None"} • Fee:{" "}
+                    {chain.feePercentage}%
                   </p>
                 </div>
               </div>
@@ -185,12 +211,12 @@ const CrossChainBridge = () => {
               <p className="pb-2 text-base leading-normal font-medium text-white">
                 From Chain
               </p>
-              <select 
+              <select
                 className="form-input flex h-14 w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg border border-[#3b4754] bg-[#1b2127] bg-[image:--select-button-svg] p-[15px] text-base leading-normal font-normal text-white placeholder:text-[#9cabba] focus:border-[#3b4754] focus:ring-0 focus:outline-0"
                 value={fromChain}
                 onChange={(e) => {
                   setFromChain(e.target.value);
-                  setAssetType(''); // Reset asset when chain changes
+                  setAssetType(""); // Reset asset when chain changes
                 }}
               >
                 <option value="">Select Source Chain</option>
@@ -207,14 +233,14 @@ const CrossChainBridge = () => {
               <p className="pb-2 text-base leading-normal font-medium text-white">
                 To Chain
               </p>
-              <select 
+              <select
                 className="form-input flex h-14 w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg border border-[#3b4754] bg-[#1b2127] bg-[image:--select-button-svg] p-[15px] text-base leading-normal font-normal text-white placeholder:text-[#9cabba] focus:border-[#3b4754] focus:ring-0 focus:outline-0"
                 value={toChain}
                 onChange={(e) => setToChain(e.target.value)}
               >
                 <option value="">Select Destination Chain</option>
                 {supportedChains
-                  .filter(chain => chain.type !== fromChain)
+                  .filter((chain) => chain.type !== fromChain)
                   .map((chain) => (
                     <option key={chain.type} value={chain.type}>
                       {bridgeService.getChainIcon(chain.type)} {chain.name}
@@ -228,7 +254,7 @@ const CrossChainBridge = () => {
               <p className="pb-2 text-base leading-normal font-medium text-white">
                 Asset
               </p>
-              <select 
+              <select
                 className="form-input flex h-14 w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg border border-[#3b4754] bg-[#1b2127] bg-[image:--select-button-svg] p-[15px] text-base leading-normal font-normal text-white placeholder:text-[#9cabba] focus:border-[#3b4754] focus:ring-0 focus:outline-0"
                 value={assetType}
                 onChange={(e) => setAssetType(e.target.value)}
@@ -258,14 +284,15 @@ const CrossChainBridge = () => {
               />
               {feeEstimate && (
                 <p className="mt-1 text-xs text-[#9cabba]">
-                  Fee: ~{bridgeService.formatAmount(feeEstimate.amount, 8)} {assetType} ({feeEstimate.percentage}%)
+                  Fee: ~{bridgeService.formatAmount(feeEstimate.amount, 8)}{" "}
+                  {assetType} ({feeEstimate.percentage}%)
                 </p>
               )}
             </label>
           </div>
 
           {/* From/To Address Fields */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 px-4 py-3 max-w-[960px]">
+          <div className="grid max-w-[960px] grid-cols-1 gap-4 px-4 py-3 md:grid-cols-2">
             <label className="flex flex-col">
               <p className="pb-2 text-base leading-normal font-medium text-white">
                 From Address
@@ -278,7 +305,7 @@ const CrossChainBridge = () => {
                 onChange={(e) => setFromAddress(e.target.value)}
               />
             </label>
-            
+
             <label className="flex flex-col">
               <p className="pb-2 text-base leading-normal font-medium text-white">
                 To Address
@@ -293,10 +320,18 @@ const CrossChainBridge = () => {
             </label>
           </div>
           <div className="flex justify-end px-4 py-3">
-            <button 
+            <button
               onClick={handleSubmitBridge}
-              disabled={isSubmitting || !fromChain || !toChain || !assetType || !amount || !fromAddress || !toAddress}
-              className="flex h-10 max-w-[480px] min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg bg-[#0d80f2] px-4 text-sm leading-normal font-bold tracking-[0.015em] text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={
+                isSubmitting ||
+                !fromChain ||
+                !toChain ||
+                !assetType ||
+                !amount ||
+                !fromAddress ||
+                !toAddress
+              }
+              className="flex h-10 max-w-[480px] min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg bg-[#0d80f2] px-4 text-sm leading-normal font-bold tracking-[0.015em] text-white disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isSubmitting ? (
                 <>
@@ -314,7 +349,7 @@ const CrossChainBridge = () => {
               <span className="ml-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
             )}
           </h3>
-          
+
           <div className="@container px-4 py-3">
             {bridgeHistory.length > 0 ? (
               <div className="flex overflow-hidden rounded-lg border border-[#3b4754] bg-[#111418]">
@@ -343,7 +378,10 @@ const CrossChainBridge = () => {
                   </thead>
                   <tbody>
                     {bridgeHistory.slice(0, 10).map((transfer) => (
-                      <tr key={transfer.id} className="border-t border-t-[#3b4754]">
+                      <tr
+                        key={transfer.id}
+                        className="border-t border-t-[#3b4754]"
+                      >
                         <td className="h-[72px] px-4 py-2 text-sm leading-normal font-normal text-[#9cabba]">
                           {transfer.createdAt.toLocaleDateString()}
                         </td>
@@ -351,16 +389,21 @@ const CrossChainBridge = () => {
                           {transfer.asset}
                         </td>
                         <td className="h-[72px] px-4 py-2 text-sm leading-normal font-normal text-[#9cabba]">
-                          {bridgeService.getChainIcon(transfer.fromChain)} {transfer.fromChain}
+                          {bridgeService.getChainIcon(transfer.fromChain)}{" "}
+                          {transfer.fromChain}
                         </td>
                         <td className="h-[72px] px-4 py-2 text-sm leading-normal font-normal text-[#9cabba]">
-                          {bridgeService.getChainIcon(transfer.toChain)} {transfer.toChain}
+                          {bridgeService.getChainIcon(transfer.toChain)}{" "}
+                          {transfer.toChain}
                         </td>
                         <td className="h-[72px] px-4 py-2 text-sm leading-normal font-normal text-[#9cabba]">
-                          {bridgeService.formatAmount(transfer.amount, 8)} {transfer.asset}
+                          {bridgeService.formatAmount(transfer.amount, 8)}{" "}
+                          {transfer.asset}
                         </td>
                         <td className="h-[72px] px-4 py-2 text-sm leading-normal font-normal">
-                          <span className={`text-sm ${bridgeService.getStatusColor(transfer.status)}`}>
+                          <span
+                            className={`text-sm ${bridgeService.getStatusColor(transfer.status)}`}
+                          >
                             {transfer.status}
                           </span>
                         </td>
@@ -372,7 +415,9 @@ const CrossChainBridge = () => {
             ) : (
               <div className="rounded-lg border border-[#3b4754] bg-[#111418] p-8 text-center">
                 <p className="text-[#9cabba]">
-                  {isLoading ? 'Loading transaction history...' : 'No bridge transactions found'}
+                  {isLoading
+                    ? "Loading transaction history..."
+                    : "No bridge transactions found"}
                 </p>
               </div>
             )}

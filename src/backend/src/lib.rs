@@ -408,7 +408,7 @@ thread_local! {
             MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(3))),
             RateLimitConfig {
                 admin: Principal::anonymous(), // Will be set in init
-                ai_verifier_canister: Principal::from_text("be2us-64aaa-aaaaa-qaabq-cai").unwrap(),
+                ai_verifier_canister: Principal::from_text("bkyz2-fmaaa-aaaaa-qaaaq-cai").unwrap(),
                 max_identity_creates_per_hour: 5,
                 max_credential_adds_per_hour: 10,
                 max_wallet_links_per_hour: 5,
@@ -419,7 +419,7 @@ thread_local! {
     );
 
     static BRIDGE_SERVICE: RefCell<BridgeService> = RefCell::new(BridgeService::new());
-    
+
     static FILE_STORAGE: RefCell<FileStorageService> = RefCell::new(FileStorageService::new());
 }
 
@@ -522,6 +522,27 @@ fn validate_identity_id(identity_id: &str) -> Result<()> {
         ));
     }
 
+    // Validate timestamp part is valid hex
+    if let Err(_) = u64::from_str_radix(parts[2], 16) {
+        return Err(Error::InvalidInput(
+            "Invalid identity ID timestamp".to_string(),
+        ));
+    }
+
+    // Validate random part is valid hex
+    if parts[3].len() != 32 || !parts[3].chars().all(|c| c.is_ascii_hexdigit()) {
+        return Err(Error::InvalidInput(
+            "Invalid identity ID random component".to_string(),
+        ));
+    }
+
+    // Additional security: Check for suspicious patterns
+    if identity_id.contains("../") || identity_id.contains("<") || identity_id.contains(">") {
+        return Err(Error::InvalidInput(
+            "Identity ID contains invalid characters".to_string(),
+        ));
+    }
+
     Ok(())
 }
 
@@ -598,6 +619,23 @@ fn check_rate_limit(operation_type: &str) -> Result<()> {
             }
 
             if tracker.count >= max_operations {
+                // Enhanced security: Add exponential backoff for repeated violations
+                let violation_key = format!("violation_{}", caller);
+                RATE_LIMITS.with(|vl| {
+                    let mut violation_tracker = RateLimitTracker {
+                        principal: caller,
+                        operation_type: "violations".to_string(),
+                        count: 1,
+                        window_start: current_time,
+                        last_operation: current_time,
+                    };
+                    
+                    if let Some(existing_violations) = vl.borrow().get(&violation_key) {
+                        violation_tracker.count = existing_violations.count + 1;
+                    }
+                    
+                    vl.borrow_mut().insert(violation_key, violation_tracker);
+                });
                 return Err(Error::RateLimitExceeded);
             }
 
@@ -1640,7 +1678,7 @@ async fn initiate_cross_chain_bridge(
     to_address: String,
 ) -> Result<String, String> {
     let caller = caller();
-    
+
     BRIDGE_SERVICE.with(|service| {
         service.borrow_mut().initiate_bridge_request(
             from_chain,
@@ -1656,20 +1694,18 @@ async fn initiate_cross_chain_bridge(
 
 #[query]
 fn get_bridge_request(request_id: String) -> Result<BridgeRequest, String> {
-    BRIDGE_SERVICE.with(|service| {
-        match service.borrow().get_bridge_request(&request_id) {
+    BRIDGE_SERVICE.with(
+        |service| match service.borrow().get_bridge_request(&request_id) {
             Some(request) => Ok(request.clone()),
             None => Err("Bridge request not found".to_string()),
-        }
-    })
+        },
+    )
 }
 
 #[query]
 fn get_user_bridge_history() -> Vec<BridgeRequest> {
     let caller = caller();
-    BRIDGE_SERVICE.with(|service| {
-        service.borrow().get_user_bridge_history(caller)
-    })
+    BRIDGE_SERVICE.with(|service| service.borrow().get_user_bridge_history(caller))
 }
 
 #[update]
@@ -1680,80 +1716,66 @@ async fn update_bridge_status(
 ) -> Result<(), String> {
     // TODO: Add admin authorization check
     BRIDGE_SERVICE.with(|service| {
-        service.borrow_mut().update_bridge_status(&request_id, status, transaction_hash)
+        service
+            .borrow_mut()
+            .update_bridge_status(&request_id, status, transaction_hash)
     })
 }
 
 #[query]
 fn calculate_bridge_fee(from_chain: ChainType, amount: u64) -> BridgeFee {
-    BRIDGE_SERVICE.with(|service| {
-        service.borrow().calculate_bridge_fee(&from_chain, amount)
-    })
+    BRIDGE_SERVICE.with(|service| service.borrow().calculate_bridge_fee(&from_chain, amount))
 }
 
 #[query]
 fn get_supported_chains() -> Vec<ChainConfig> {
-    BRIDGE_SERVICE.with(|service| {
-        service.borrow().get_supported_chains()
-    })
+    BRIDGE_SERVICE.with(|service| service.borrow().get_supported_chains())
 }
 
 //=============================================================================
-// FILE STORAGE FUNCTIONS  
+// FILE STORAGE FUNCTIONS
 //=============================================================================
 
 #[update]
 async fn upload_file(request: FileUploadRequest) -> Result<FileUploadResponse, String> {
     let caller = caller();
-    
-    FILE_STORAGE.with(|storage| {
-        storage.borrow_mut().upload_file(request, caller)
-    })
+
+    FILE_STORAGE.with(|storage| storage.borrow_mut().upload_file(request, caller))
 }
 
 #[query]
 fn get_file_metadata(file_id: String) -> Result<FileMetadata, String> {
     let caller = caller();
-    
-    FILE_STORAGE.with(|storage| {
-        storage.borrow().get_file_metadata(&file_id, caller)
-    })
+
+    FILE_STORAGE.with(|storage| storage.borrow().get_file_metadata(&file_id, caller))
 }
 
 #[query]
 fn get_user_files() -> Vec<FileMetadata> {
     let caller = caller();
-    
-    FILE_STORAGE.with(|storage| {
-        storage.borrow().get_user_files(caller)
-    })
+
+    FILE_STORAGE.with(|storage| storage.borrow().get_user_files(caller))
 }
 
 #[query]
 fn get_asset_files(asset_id: String) -> Result<Vec<FileMetadata>, String> {
     let caller = caller();
-    
-    FILE_STORAGE.with(|storage| {
-        storage.borrow().get_asset_files(&asset_id, caller)
-    })
+
+    FILE_STORAGE.with(|storage| storage.borrow().get_asset_files(&asset_id, caller))
 }
 
 #[update]
 async fn delete_file(file_id: String) -> Result<(), String> {
     let caller = caller();
-    
-    FILE_STORAGE.with(|storage| {
-        storage.borrow_mut().delete_file(&file_id, caller)
-    })
+
+    FILE_STORAGE.with(|storage| storage.borrow_mut().delete_file(&file_id, caller))
 }
 
 #[query]
 fn download_file(file_id: String) -> Result<Vec<u8>, String> {
     let caller = caller();
-    
-    FILE_STORAGE.with(|storage| {
-        storage.borrow().get_file(&file_id, caller)
-    })
+
+    FILE_STORAGE.with(|storage| storage.borrow().get_file(&file_id, caller))
 }
 
 //=============================================================================

@@ -136,7 +136,9 @@ const AssetVerification = () => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const files = Array.from(event.target.files || []);
     if (files.length === 0) return;
 
@@ -156,7 +158,7 @@ const AssetVerification = () => {
           file,
           formData.assetId,
           undefined, // identity_id (optional)
-          ['asset-verification'] // tags
+          ["asset-verification"], // tags
         );
 
         // Get uploaded file metadata
@@ -166,19 +168,18 @@ const AssetVerification = () => {
 
       const uploadedMetadata = await Promise.all(uploadPromises);
       setUploadedFiles((prev) => [...prev, ...uploadedMetadata]);
-      
-      // Update form data with uploaded files (keep for compatibility)
-      setFormData((prev) => ({ 
-        ...prev, 
-        documents: [...(prev.documents || []), ...files] 
-      }));
 
+      // Update form data with uploaded files (keep for compatibility)
+      setFormData((prev) => ({
+        ...prev,
+        documents: [...(prev.documents || []), ...files],
+      }));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'File upload failed');
+      setError(err instanceof Error ? err.message : "File upload failed");
     } finally {
       setIsUploading(false);
       // Clear the input
-      event.target.value = '';
+      event.target.value = "";
     }
   };
 
@@ -230,7 +231,7 @@ const AssetVerification = () => {
         location: formData.location,
         timestamp: Date.now(),
         documentCount: uploadedFiles.length,
-        fileIds: uploadedFiles.map(f => f.file_id),
+        fileIds: uploadedFiles.map((f) => f.file_id),
         ...formData.metadata,
       });
 
@@ -451,9 +452,9 @@ const AssetVerification = () => {
               <label
                 htmlFor="file-upload"
                 className={`cursor-pointer rounded-lg px-6 py-3 font-medium text-white transition-colors ${
-                  isUploading 
-                    ? 'bg-gray-600 cursor-not-allowed'
-                    : 'bg-[#283039] hover:bg-[#3b4754]'
+                  isUploading
+                    ? "cursor-not-allowed bg-gray-600"
+                    : "bg-[#283039] hover:bg-[#3b4754]"
                 }`}
               >
                 {isUploading ? (
@@ -462,7 +463,7 @@ const AssetVerification = () => {
                     Uploading...
                   </>
                 ) : (
-                  'Browse Files'
+                  "Browse Files"
                 )}
               </label>
 
@@ -479,7 +480,9 @@ const AssetVerification = () => {
                           <span className="text-lg">
                             {fileService.getFileTypeIcon(file.mime_type)}
                           </span>
-                          <span className="text-gray-300">{file.original_name}</span>
+                          <span className="text-gray-300">
+                            {file.original_name}
+                          </span>
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="text-sm text-gray-400">
@@ -489,11 +492,13 @@ const AssetVerification = () => {
                             onClick={async () => {
                               try {
                                 await fileService.deleteFile(file.file_id);
-                                setUploadedFiles(prev => 
-                                  prev.filter(f => f.file_id !== file.file_id)
+                                setUploadedFiles((prev) =>
+                                  prev.filter(
+                                    (f) => f.file_id !== file.file_id,
+                                  ),
                                 );
                               } catch (err) {
-                                setError('Failed to delete file');
+                                setError("Failed to delete file");
                               }
                             }}
                             className="text-red-400 hover:text-red-300"

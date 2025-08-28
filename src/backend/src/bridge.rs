@@ -1,8 +1,8 @@
+use crate::ChainType;
 use candid::{CandidType, Principal};
 use ic_cdk::api::time;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use crate::ChainType;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct BridgeRequest {
@@ -19,7 +19,6 @@ pub struct BridgeRequest {
     pub completed_at: Option<u64>,
     pub transaction_hashes: Vec<String>,
 }
-
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum BridgeStatus {
@@ -62,6 +61,12 @@ pub struct BridgeService {
     pub user_history: HashMap<Principal, Vec<String>>, // Principal -> Vec<request_id>
 }
 
+impl Default for BridgeService {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl BridgeService {
     pub fn new() -> Self {
         let mut service = Self {
@@ -69,7 +74,7 @@ impl BridgeService {
             chain_configs: HashMap::new(),
             user_history: HashMap::new(),
         };
-        
+
         service.init_default_chains();
         service
     }
@@ -83,7 +88,7 @@ impl BridgeService {
                 rpc_url: "https://blockstream.info/api/".to_string(),
                 bridge_contract: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh".to_string(),
                 supported_assets: vec!["BTC".to_string()],
-                min_amount: 10000, // 0.0001 BTC in satoshis
+                min_amount: 10000,     // 0.0001 BTC in satoshis
                 max_amount: 100000000, // 1 BTC in satoshis
                 fee_percentage: 0.5,
                 confirmation_blocks: 6,
@@ -98,7 +103,7 @@ impl BridgeService {
                 rpc_url: "https://mainnet.infura.io/v3/".to_string(),
                 bridge_contract: "0x742d35Cc6635C0532925a3b8D6C8D2f8C4bDD4A1".to_string(),
                 supported_assets: vec!["ETH".to_string(), "USDC".to_string(), "USDT".to_string()],
-                min_amount: 1000000000000000, // 0.001 ETH in wei
+                min_amount: 1000000000000000,     // 0.001 ETH in wei
                 max_amount: 10000000000000000000, // 10 ETH in wei
                 fee_percentage: 0.3,
                 confirmation_blocks: 12,
@@ -113,7 +118,7 @@ impl BridgeService {
                 rpc_url: "https://api.mainnet-beta.solana.com".to_string(),
                 bridge_contract: "HLmqeL62xR1QoZ1HKKbXRrdN1p3phKpxRMb2VVopvBBz".to_string(),
                 supported_assets: vec!["SOL".to_string(), "USDC".to_string()],
-                min_amount: 10000000, // 0.01 SOL in lamports
+                min_amount: 10000000,      // 0.01 SOL in lamports
                 max_amount: 1000000000000, // 1000 SOL in lamports
                 fee_percentage: 0.2,
                 confirmation_blocks: 32,
@@ -135,7 +140,7 @@ impl BridgeService {
         let request_id = format!(
             "bridge_{}_{}_{}",
             time(),
-            user_principal.to_string()[..8].to_string(),
+            &user_principal.to_string()[..8],
             amount
         );
 
@@ -219,7 +224,7 @@ impl BridgeService {
         if let Some(config) = self.chain_configs.get(chain_name) {
             let percentage_fee = (amount as f64 * config.fee_percentage / 100.0) as u64;
             let fixed_fee = 1000; // Base fixed fee
-            
+
             BridgeFee {
                 amount: percentage_fee + fixed_fee,
                 percentage: config.fee_percentage,
@@ -259,7 +264,10 @@ impl BridgeService {
 
         if let Some(config) = self.chain_configs.get(from_chain_name) {
             if !config.supported_assets.contains(&asset_type.to_string()) {
-                return Err(format!("Asset {} not supported on source chain", asset_type));
+                return Err(format!(
+                    "Asset {} not supported on source chain",
+                    asset_type
+                ));
             }
 
             if amount < config.min_amount {

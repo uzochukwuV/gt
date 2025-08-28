@@ -410,7 +410,7 @@ DeepfakeAttack,
 impl Default for FraudDetectionModel {
 fn default() -> Self {
 Self {
-version: "1.0.0".to_string(),
+version: "1.0.0".to*string(),
 model_type: ModelType::NeuralNetwork,
 architecture: ModelArchitecture {
 layers: vec![
@@ -437,8 +437,8 @@ dropout_rate: 0.2,
 },
 weights: ModelWeights {
 layer_weights: vec![
-vec![0.1; 3200], // 64 _ 50
-vec![0.1; 2048], // 32 _ 64
+vec![0.1; 3200], // 64 * 50
+vec![0.1; 2048], // 32 \_ 64
 vec![0.1; 32], // 1 \* 32
 ],
 biases: vec![0.0; 97], // 64 + 32 + 1
@@ -995,7 +995,7 @@ let mut risk_factors = Vec::new();
 
 }
 
-fn map*feature_to_category(feature_name: &str) -> RiskCategory {
+fn map\*feature_to_category(feature_name: &str) -> RiskCategory {
 match feature_name {
 name if name.contains("document") => RiskCategory::DocumentFraud,
 name if name.contains("biometric") => RiskCategory::BiometricSpoof,
@@ -1004,9 +1004,10 @@ name if name.contains("geographic") => RiskCategory::GeographicRisk,
 name if name.contains("device") => RiskCategory::DeviceRisk,
 name if name.contains("temporal") => RiskCategory::TemporalAnomaly,
 name if name.contains("deepfake") => RiskCategory::BiometricSpoof,
-* => RiskCategory::DocumentFraud,
-}
-}
+
+- => RiskCategory::DocumentFraud,
+  }
+  }
 
 fn generate_recommendations(risk_factors: &[RiskFactor], overall_score: f64) -> Vec<String> {
 let mut recommendations = Vec::new();

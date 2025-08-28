@@ -11,9 +11,9 @@ pub struct FileMetadata {
     pub size: u64,
     pub uploaded_by: Principal,
     pub uploaded_at: u64,
-    pub asset_id: Option<String>, // Link to asset verification
+    pub asset_id: Option<String>,    // Link to asset verification
     pub identity_id: Option<String>, // Link to identity
-    pub file_hash: String, // SHA-256 hash for integrity
+    pub file_hash: String,           // SHA-256 hash for integrity
     pub is_public: bool,
     pub tags: Vec<String>,
 }
@@ -58,8 +58,14 @@ pub struct FileUploadResponse {
 pub struct FileStorageService {
     pub files: HashMap<String, StoredFile>,
     pub file_index: HashMap<Principal, Vec<String>>, // User -> File IDs
-    pub asset_files: HashMap<String, Vec<String>>, // Asset ID -> File IDs
+    pub asset_files: HashMap<String, Vec<String>>,   // Asset ID -> File IDs
     pub identity_files: HashMap<String, Vec<String>>, // Identity ID -> File IDs
+}
+
+impl Default for FileStorageService {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl FileStorageService {
@@ -90,9 +96,9 @@ impl FileStorageService {
 
         // Generate unique file ID
         let file_id = format!(
-            "file_{}_{}_{}", 
+            "file_{}_{}_{}",
             time(),
-            uploader.to_string()[..8].to_string(),
+            &uploader.to_string()[..8],
             request.original_name.len()
         );
 
@@ -101,7 +107,8 @@ impl FileStorageService {
 
         // Split file into chunks for storage efficiency
         const CHUNK_SIZE: usize = 64 * 1024; // 64KB chunks
-        let chunks: Vec<Vec<u8>> = request.data
+        let chunks: Vec<Vec<u8>> = request
+            .data
             .chunks(CHUNK_SIZE)
             .map(|chunk| chunk.to_vec())
             .collect();
@@ -176,7 +183,11 @@ impl FileStorageService {
         }
     }
 
-    pub fn get_file_metadata(&self, file_id: &str, requester: Principal) -> Result<FileMetadata, String> {
+    pub fn get_file_metadata(
+        &self,
+        file_id: &str,
+        requester: Principal,
+    ) -> Result<FileMetadata, String> {
         match self.files.get(file_id) {
             Some(stored_file) => {
                 if !self.can_access_file(&stored_file.metadata, requester) {
@@ -199,7 +210,11 @@ impl FileStorageService {
         }
     }
 
-    pub fn get_asset_files(&self, asset_id: &str, requester: Principal) -> Result<Vec<FileMetadata>, String> {
+    pub fn get_asset_files(
+        &self,
+        asset_id: &str,
+        requester: Principal,
+    ) -> Result<Vec<FileMetadata>, String> {
         match self.asset_files.get(asset_id) {
             Some(file_ids) => {
                 let mut accessible_files = Vec::new();

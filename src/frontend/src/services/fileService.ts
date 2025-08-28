@@ -1,5 +1,5 @@
 import { backend } from "../../../declarations/backend";
-import type { 
+import type {
   FileUploadRequest as CandidFileUploadRequest,
   FileMetadata as CandidFileMetadata,
 } from "../../../declarations/backend/backend.did";
@@ -66,13 +66,12 @@ export const fileService = {
     file: File,
     assetId?: string,
     identityId?: string,
-    tags: string[] = []
+    tags: string[] = [],
   ): Promise<FileUploadResponse> {
-
     // Convert file to array buffer
     const arrayBuffer = await file.arrayBuffer();
     const uint8Array = new Uint8Array(arrayBuffer);
-    
+
     // Convert to Candid format
     const candidRequest: CandidFileUploadRequest = {
       original_name: file.name,
@@ -85,17 +84,17 @@ export const fileService = {
 
     try {
       const result = await backend.upload_file(candidRequest);
-      
-      if ('Err' in result) {
+
+      if ("Err" in result) {
         throw new Error(result.Err);
       }
-      
+
       return {
         file_id: result.Ok.file_id,
         url: fromOptionalArray(result.Ok.url),
       };
     } catch (error) {
-      console.error('File upload failed:', error);
+      console.error("File upload failed:", error);
       throw error;
     }
   },
@@ -104,17 +103,16 @@ export const fileService = {
    * Get file metadata
    */
   async getFileMetadata(fileId: string): Promise<FileMetadata> {
-
     try {
       const result = await backend.get_file_metadata(fileId);
-      
-      if ('Err' in result) {
+
+      if ("Err" in result) {
         throw new Error(result.Err);
       }
-      
+
       return toFrontendFileMetadata(result.Ok);
     } catch (error) {
-      console.error('Failed to get file metadata:', error);
+      console.error("Failed to get file metadata:", error);
       throw error;
     }
   },
@@ -123,12 +121,11 @@ export const fileService = {
    * Get all files uploaded by the current user
    */
   async getUserFiles(): Promise<FileMetadata[]> {
-
     try {
       const result = await backend.get_user_files();
       return result.map(toFrontendFileMetadata);
     } catch (error) {
-      console.error('Failed to get user files:', error);
+      console.error("Failed to get user files:", error);
       throw error;
     }
   },
@@ -137,17 +134,16 @@ export const fileService = {
    * Get files associated with an asset
    */
   async getAssetFiles(assetId: string): Promise<FileMetadata[]> {
-
     try {
       const result = await backend.get_asset_files(assetId);
-      
-      if ('Err' in result) {
+
+      if ("Err" in result) {
         throw new Error(result.Err);
       }
-      
+
       return result.Ok.map(toFrontendFileMetadata);
     } catch (error) {
-      console.error('Failed to get asset files:', error);
+      console.error("Failed to get asset files:", error);
       throw error;
     }
   },
@@ -156,17 +152,16 @@ export const fileService = {
    * Download a file
    */
   async downloadFile(fileId: string): Promise<Uint8Array> {
-
     try {
       const result = await backend.download_file(fileId);
-      
-      if ('Err' in result) {
+
+      if ("Err" in result) {
         throw new Error(result.Err);
       }
-      
+
       return new Uint8Array(result.Ok);
     } catch (error) {
-      console.error('File download failed:', error);
+      console.error("File download failed:", error);
       throw error;
     }
   },
@@ -175,15 +170,14 @@ export const fileService = {
    * Delete a file
    */
   async deleteFile(fileId: string): Promise<void> {
-
     try {
       const result = await backend.delete_file(fileId);
-      
-      if ('Err' in result) {
+
+      if ("Err" in result) {
         throw new Error(result.Err);
       }
     } catch (error) {
-      console.error('File deletion failed:', error);
+      console.error("File deletion failed:", error);
       throw error;
     }
   },
@@ -202,23 +196,23 @@ export const fileService = {
   validateFile(file: File): { valid: boolean; error?: string } {
     const maxSize = 10 * 1024 * 1024; // 10MB
     const supportedTypes = [
-      'application/pdf',
-      'image/jpeg',
-      'image/png',
-      'image/gif',
-      'image/webp',
-      'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'text/plain',
-      'text/csv',
+      "application/pdf",
+      "image/jpeg",
+      "image/png",
+      "image/gif",
+      "image/webp",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "text/plain",
+      "text/csv",
     ];
 
     if (file.size > maxSize) {
-      return { valid: false, error: 'File size exceeds 10MB limit' };
+      return { valid: false, error: "File size exceeds 10MB limit" };
     }
 
     if (!supportedTypes.includes(file.type)) {
-      return { valid: false, error: 'Unsupported file type' };
+      return { valid: false, error: "Unsupported file type" };
     }
 
     return { valid: true };
@@ -228,24 +222,24 @@ export const fileService = {
    * Format file size for display
    */
   formatFileSize(bytes: number): string {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) return "0 Bytes";
 
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
 
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   },
 
   /**
    * Get file type icon
    */
   getFileTypeIcon(mimeType: string): string {
-    if (mimeType.startsWith('image/')) return '🖼️';
-    if (mimeType === 'application/pdf') return '📄';
-    if (mimeType.includes('word')) return '📝';
-    if (mimeType.includes('text')) return '📄';
-    return '📎';
+    if (mimeType.startsWith("image/")) return "🖼️";
+    if (mimeType === "application/pdf") return "📄";
+    if (mimeType.includes("word")) return "📝";
+    if (mimeType.includes("text")) return "📄";
+    return "📎";
   },
 };
 

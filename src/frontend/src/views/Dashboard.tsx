@@ -4,7 +4,10 @@ import { backendService } from "../services/backendService";
 import { lendingService } from "../services/lendingService";
 import { marketplaceService } from "../services/marketplaceService";
 import { fileService, type FileMetadata } from "../services/fileService";
-import { bridgeService, type CrossChainTransfer } from "../services/bridgeService";
+import {
+  bridgeService,
+  type CrossChainTransfer,
+} from "../services/bridgeService";
 import Layout from "../components/Layout";
 import {
   Identity,
@@ -35,21 +38,21 @@ const Dashboard = () => {
           const [identities, files, bridgeTransfers] = await Promise.all([
             backendService.getMyIdentities(),
             fileService.getUserFiles(),
-            bridgeService.getUserBridgeHistory()
+            bridgeService.getUserBridgeHistory(),
           ]);
-          
+
           setUserIdentities(identities);
           setUserFiles(files);
           setBridgeHistory(bridgeTransfers);
-          
+
           // backendService.getAuditTrail(principal.toText()).then(setAuditTrail);
         } catch (error) {
-          console.error('Failed to load dashboard data:', error);
+          console.error("Failed to load dashboard data:", error);
         } finally {
           setLoading(false);
         }
       }
-      
+
       if (lendingActor) {
         lendingService(lendingActor).getLendingStats().then(setLendingStats);
       }
@@ -59,7 +62,7 @@ const Dashboard = () => {
           .then(setMarketplaceStats);
       }
     };
-    
+
     loadDashboardData();
   }, [isAuthenticated, backendActor, lendingActor, marketplaceActor]);
 
@@ -202,7 +205,8 @@ const Dashboard = () => {
                   </div>
                 ) : userFiles.length === 0 ? (
                   <div className="flex-1 p-6 text-center text-[#9cabba]">
-                    No files uploaded yet. Visit Asset Verification to upload documents.
+                    No files uploaded yet. Visit Asset Verification to upload
+                    documents.
                   </div>
                 ) : (
                   <table className="flex-1">
@@ -224,18 +228,24 @@ const Dashboard = () => {
                     </thead>
                     <tbody>
                       {userFiles.slice(0, 5).map((file) => (
-                        <tr className="border-t border-t-[#3b4754]" key={file.file_id}>
+                        <tr
+                          className="border-t border-t-[#3b4754]"
+                          key={file.file_id}
+                        >
                           <td className="h-[60px] px-4 py-2 text-sm leading-normal font-normal text-white">
-                            {fileService.getFileTypeIcon(file.mime_type)} {file.original_name}
+                            {fileService.getFileTypeIcon(file.mime_type)}{" "}
+                            {file.original_name}
                           </td>
                           <td className="h-[60px] px-4 py-2 text-sm leading-normal font-normal text-[#9cabba]">
                             {fileService.formatFileSize(Number(file.size))}
                           </td>
                           <td className="h-[60px] px-4 py-2 text-sm leading-normal font-normal text-[#9cabba]">
-                            {new Date(Number(file.uploaded_at) / 1000000).toLocaleDateString()}
+                            {new Date(
+                              Number(file.uploaded_at) / 1000000,
+                            ).toLocaleDateString()}
                           </td>
                           <td className="h-[60px] px-4 py-2 text-sm leading-normal font-normal text-[#9cabba]">
-                            {file.is_public ? '🔓 Public' : '🔒 Private'}
+                            {file.is_public ? "🔓 Public" : "🔒 Private"}
                           </td>
                         </tr>
                       ))}
@@ -263,7 +273,8 @@ const Dashboard = () => {
                   </div>
                 ) : bridgeHistory.length === 0 ? (
                   <div className="flex-1 p-6 text-center text-[#9cabba]">
-                    No bridge transfers yet. Visit Cross-Chain Bridge to start transferring assets.
+                    No bridge transfers yet. Visit Cross-Chain Bridge to start
+                    transferring assets.
                   </div>
                 ) : (
                   <table className="flex-1">
@@ -288,18 +299,28 @@ const Dashboard = () => {
                     </thead>
                     <tbody>
                       {bridgeHistory.slice(0, 5).map((transfer) => (
-                        <tr className="border-t border-t-[#3b4754]" key={transfer.id}>
+                        <tr
+                          className="border-t border-t-[#3b4754]"
+                          key={transfer.id}
+                        >
                           <td className="h-[60px] px-4 py-2 text-sm leading-normal font-normal text-white">
-                            {bridgeService.getChainIcon(transfer.fromChain)} {transfer.fromChain}
+                            {bridgeService.getChainIcon(transfer.fromChain)}{" "}
+                            {transfer.fromChain}
                           </td>
                           <td className="h-[60px] px-4 py-2 text-sm leading-normal font-normal text-white">
-                            {bridgeService.getChainIcon(transfer.toChain)} {transfer.toChain}
+                            {bridgeService.getChainIcon(transfer.toChain)}{" "}
+                            {transfer.toChain}
                           </td>
                           <td className="h-[60px] px-4 py-2 text-sm leading-normal font-normal text-[#9cabba]">
-                            {bridgeService.formatAmount(transfer.amount)} {transfer.asset}
+                            {bridgeService.formatAmount(transfer.amount)}{" "}
+                            {transfer.asset}
                           </td>
                           <td className="h-[60px] px-4 py-2 text-sm leading-normal font-normal">
-                            <span className={bridgeService.getStatusColor(transfer.status)}>
+                            <span
+                              className={bridgeService.getStatusColor(
+                                transfer.status,
+                              )}
+                            >
                               {transfer.status}
                             </span>
                           </td>
@@ -374,7 +395,7 @@ const Dashboard = () => {
                     </p>
                   </div>
                 ) : (
-                  <div className="min-h-[180px] flex items-center justify-center text-[#9cabba]">
+                  <div className="flex min-h-[180px] items-center justify-center text-[#9cabba]">
                     No lending data available
                   </div>
                 )}
@@ -403,7 +424,7 @@ const Dashboard = () => {
                     </p>
                   </div>
                 ) : (
-                  <div className="min-h-[180px] flex items-center justify-center text-[#9cabba]">
+                  <div className="flex min-h-[180px] items-center justify-center text-[#9cabba]">
                     No marketplace data available
                   </div>
                 )}
