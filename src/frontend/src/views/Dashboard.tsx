@@ -15,7 +15,7 @@ const Dashboard = () => {
   const { primaryRole, userActivity, loading, getRoleConfig } = useUserRole();
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [hasSeenOnboarding, setHasSeenOnboarding] = useState(
-    localStorage.getItem('globalTrustOnboardingCompleted') === 'true'
+    localStorage.getItem("globalTrustOnboardingCompleted") === "true",
   );
 
   const handleStartOnboarding = () => {
@@ -25,7 +25,7 @@ const Dashboard = () => {
   const handleCompleteOnboarding = () => {
     setShowOnboarding(false);
     setHasSeenOnboarding(true);
-    localStorage.setItem('globalTrustOnboardingCompleted', 'true');
+    localStorage.setItem("globalTrustOnboardingCompleted", "true");
   };
 
   const handleCloseOnboarding = () => {
@@ -35,24 +35,24 @@ const Dashboard = () => {
   const renderRoleDashboard = () => {
     if (loading) {
       return (
-        <div className="flex items-center justify-center h-64">
+        <div className="flex h-64 items-center justify-center">
           <div className="text-xl text-gray-400">Loading dashboard...</div>
         </div>
       );
     }
 
     switch (primaryRole) {
-      case 'newcomer':
+      case "newcomer":
         return <NewcomerDashboard onStartOnboarding={handleStartOnboarding} />;
-      case 'lender':
+      case "lender":
         return <LenderDashboard userActivity={userActivity} />;
-      case 'borrower':
+      case "borrower":
         return <BorrowerDashboard userActivity={userActivity} />;
-      case 'trader':
+      case "trader":
         return <TraderDashboard userActivity={userActivity} />;
-      case 'artist':
+      case "artist":
         return <ArtistDashboard userActivity={userActivity} />;
-      case 'investor':
+      case "investor":
         return <InvestorDashboard userActivity={userActivity} />;
       default:
         return <NewcomerDashboard onStartOnboarding={handleStartOnboarding} />;
@@ -61,7 +61,12 @@ const Dashboard = () => {
 
   // Show onboarding to new users who haven't seen it
   useEffect(() => {
-    if (isAuthenticated && !loading && primaryRole === 'newcomer' && !hasSeenOnboarding) {
+    if (
+      isAuthenticated &&
+      !loading &&
+      primaryRole === "newcomer" &&
+      !hasSeenOnboarding
+    ) {
       setShowOnboarding(true);
     }
   }, [isAuthenticated, loading, primaryRole, hasSeenOnboarding]);
@@ -69,13 +74,13 @@ const Dashboard = () => {
   if (!isAuthenticated) {
     return (
       <Layout>
-        <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="flex min-h-[50vh] items-center justify-center">
           <div className="text-center">
-            <div className="text-6xl mb-6">🔐</div>
-            <h1 className="text-3xl font-bold text-white mb-4">
+            <div className="mb-6 text-6xl">🔐</div>
+            <h1 className="mb-4 text-3xl font-bold text-white">
               Welcome to GlobalTrust
             </h1>
-            <p className="text-xl text-gray-300 mb-8">
+            <p className="mb-8 text-xl text-gray-300">
               Please connect your wallet to access your personalized dashboard
             </p>
           </div>
@@ -88,7 +93,7 @@ const Dashboard = () => {
     <Layout>
       <div className="p-6">
         {renderRoleDashboard()}
-        
+
         {/* Onboarding Wizard */}
         <OnboardingWizard
           isOpen={showOnboarding}

@@ -1,7 +1,13 @@
-import { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useState, useEffect } from "react";
+import { useAuth } from "../context/AuthContext";
 
-export type UserRole = 'newcomer' | 'lender' | 'borrower' | 'trader' | 'artist' | 'investor';
+export type UserRole =
+  | "newcomer"
+  | "lender"
+  | "borrower"
+  | "trader"
+  | "artist"
+  | "investor";
 
 interface UserActivity {
   hasIdentities: boolean;
@@ -15,8 +21,9 @@ interface UserActivity {
 }
 
 export const useUserRole = () => {
-  const { isAuthenticated, backendActor, lendingActor, marketplaceActor } = useAuth();
-  const [primaryRole, setPrimaryRole] = useState<UserRole>('newcomer');
+  const { isAuthenticated, backendActor, lendingActor, marketplaceActor } =
+    useAuth();
+  const [primaryRole, setPrimaryRole] = useState<UserRole>("newcomer");
   const [secondaryRoles, setSecondaryRoles] = useState<UserRole[]>([]);
   const [userActivity, setUserActivity] = useState<UserActivity>({
     hasIdentities: false,
@@ -30,54 +37,59 @@ export const useUserRole = () => {
   });
   const [loading, setLoading] = useState(true);
 
-  const determineUserRole = (activity: UserActivity): { primary: UserRole; secondary: UserRole[] } => {
+  const determineUserRole = (
+    activity: UserActivity,
+  ): { primary: UserRole; secondary: UserRole[] } => {
     const roles: UserRole[] = [];
 
     // If user has no activity, they're a newcomer
     if (!activity.hasIdentities && activity.reputationScore === 0) {
-      return { primary: 'newcomer', secondary: [] };
+      return { primary: "newcomer", secondary: [] };
     }
 
     // Determine roles based on activity
-    if (activity.hasOffers || (activity.hasLoans && activity.reputationScore > 70)) {
-      roles.push('lender');
+    if (
+      activity.hasOffers ||
+      (activity.hasLoans && activity.reputationScore > 70)
+    ) {
+      roles.push("lender");
     }
 
     if (activity.hasLoans && !activity.hasOffers) {
-      roles.push('borrower');
+      roles.push("borrower");
     }
 
     if (activity.hasListings || activity.bridgeHistory > 2) {
-      roles.push('trader');
+      roles.push("trader");
     }
 
     if (activity.fileCount > 3 && activity.hasListings) {
-      roles.push('artist');
+      roles.push("artist");
     }
 
     if (activity.reputationScore > 80 && activity.bridgeHistory > 5) {
-      roles.push('investor');
+      roles.push("investor");
     }
 
     // Determine primary role based on most activity
-    let primary: UserRole = 'newcomer';
-    if (roles.includes('lender') && activity.hasOffers) {
-      primary = 'lender';
-    } else if (roles.includes('trader') && activity.hasListings) {
-      primary = 'trader';
-    } else if (roles.includes('borrower')) {
-      primary = 'borrower';
-    } else if (roles.includes('artist')) {
-      primary = 'artist';
-    } else if (roles.includes('investor')) {
-      primary = 'investor';
+    let primary: UserRole = "newcomer";
+    if (roles.includes("lender") && activity.hasOffers) {
+      primary = "lender";
+    } else if (roles.includes("trader") && activity.hasListings) {
+      primary = "trader";
+    } else if (roles.includes("borrower")) {
+      primary = "borrower";
+    } else if (roles.includes("artist")) {
+      primary = "artist";
+    } else if (roles.includes("investor")) {
+      primary = "investor";
     } else if (roles.length > 0) {
       primary = roles[0];
     }
 
     return {
       primary,
-      secondary: roles.filter(role => role !== primary)
+      secondary: roles.filter((role) => role !== primary),
     };
   };
 
@@ -90,14 +102,16 @@ export const useUserRole = () => {
 
       try {
         setLoading(true);
-        
+
         // Get user identities and basic info
         const identities = await backendActor.get_my_identities();
-        
+
         // Calculate average reputation
-        const avgReputation = identities.length > 0 
-          ? identities.reduce((sum, id) => sum + id.reputation_score, 0) / identities.length
-          : 0;
+        const avgReputation =
+          identities.length > 0
+            ? identities.reduce((sum, id) => sum + id.reputation_score, 0) /
+              identities.length
+            : 0;
 
         // Get file count
         const userFiles = await backendActor.get_user_files();
@@ -114,7 +128,7 @@ export const useUserRole = () => {
             hasLoans = Number(lendingStats.active_loans) > 0;
             // Note: Would need to add user-specific loan/offer check
           } catch (error) {
-            console.warn('Could not fetch lending data:', error);
+            console.warn("Could not fetch lending data:", error);
           }
         }
 
@@ -122,17 +136,18 @@ export const useUserRole = () => {
         let hasListings = false;
         if (marketplaceActor) {
           try {
-            const marketplaceStats = await marketplaceActor.get_marketplace_stats();
+            const marketplaceStats =
+              await marketplaceActor.get_marketplace_stats();
             hasListings = Number(marketplaceStats.active_listings) > 0;
             // Note: Would need to add user-specific listing check
           } catch (error) {
-            console.warn('Could not fetch marketplace data:', error);
+            console.warn("Could not fetch marketplace data:", error);
           }
         }
 
         const activity: UserActivity = {
           hasIdentities: identities.length > 0,
-          hasAssets: identities.some(id => id.linked_assets.length > 0),
+          hasAssets: identities.some((id) => id.linked_assets.length > 0),
           hasLoans,
           hasOffers,
           hasListings,
@@ -146,9 +161,8 @@ export const useUserRole = () => {
         const { primary, secondary } = determineUserRole(activity);
         setPrimaryRole(primary);
         setSecondaryRoles(secondary);
-
       } catch (error) {
-        console.error('Failed to analyze user activity:', error);
+        console.error("Failed to analyze user activity:", error);
       } finally {
         setLoading(false);
       }
@@ -160,47 +174,51 @@ export const useUserRole = () => {
   const getRoleConfig = (role: UserRole) => {
     const configs = {
       newcomer: {
-        title: 'Welcome to GlobalTrust',
-        description: 'Start building your digital identity',
-        color: 'blue',
-        icon: '🌟',
-        primaryActions: ['Create Identity', 'Upload Documents', 'Learn More']
+        title: "Welcome to GlobalTrust",
+        description: "Start building your digital identity",
+        color: "blue",
+        icon: "🌟",
+        primaryActions: ["Create Identity", "Upload Documents", "Learn More"],
       },
       lender: {
-        title: 'Lending Dashboard',
-        description: 'Manage your loan offers and portfolio',
-        color: 'green',
-        icon: '🏦',
-        primaryActions: ['Create Loan Offer', 'View Active Loans', 'Check Analytics']
+        title: "Lending Dashboard",
+        description: "Manage your loan offers and portfolio",
+        color: "green",
+        icon: "🏦",
+        primaryActions: [
+          "Create Loan Offer",
+          "View Active Loans",
+          "Check Analytics",
+        ],
       },
       borrower: {
-        title: 'Borrowing Hub',
-        description: 'Find loans and manage your assets',
-        color: 'orange',
-        icon: '💰',
-        primaryActions: ['Find Loans', 'Upload Collateral', 'Repay Loans']
+        title: "Borrowing Hub",
+        description: "Find loans and manage your assets",
+        color: "orange",
+        icon: "💰",
+        primaryActions: ["Find Loans", "Upload Collateral", "Repay Loans"],
       },
       trader: {
-        title: 'Trading Center',
-        description: 'Buy and sell verified assets',
-        color: 'purple',
-        icon: '📊',
-        primaryActions: ['Browse Market', 'List Asset', 'Bridge Assets']
+        title: "Trading Center",
+        description: "Buy and sell verified assets",
+        color: "purple",
+        icon: "📊",
+        primaryActions: ["Browse Market", "List Asset", "Bridge Assets"],
       },
       artist: {
-        title: 'Creator Studio',
-        description: 'Showcase and monetize your creations',
-        color: 'pink',
-        icon: '🎨',
-        primaryActions: ['Upload Art', 'Create Listing', 'Verify Authenticity']
+        title: "Creator Studio",
+        description: "Showcase and monetize your creations",
+        color: "pink",
+        icon: "🎨",
+        primaryActions: ["Upload Art", "Create Listing", "Verify Authenticity"],
       },
       investor: {
-        title: 'Investment Portfolio',
-        description: 'Diversify across chains and assets',
-        color: 'indigo',
-        icon: '💎',
-        primaryActions: ['View Portfolio', 'Analyze Markets', 'Bridge Funds']
-      }
+        title: "Investment Portfolio",
+        description: "Diversify across chains and assets",
+        color: "indigo",
+        icon: "💎",
+        primaryActions: ["View Portfolio", "Analyze Markets", "Bridge Funds"],
+      },
     };
 
     return configs[role];
@@ -211,6 +229,6 @@ export const useUserRole = () => {
     secondaryRoles,
     userActivity,
     loading,
-    getRoleConfig
+    getRoleConfig,
   };
 };

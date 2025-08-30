@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
-import { Card, Button } from '../index';
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+import { Card, Button } from "../index";
 
 interface BorrowerDashboardProps {
   userActivity: {
@@ -11,7 +11,9 @@ interface BorrowerDashboardProps {
   };
 }
 
-const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({ userActivity }) => {
+const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
+  userActivity,
+}) => {
   const { lendingActor } = useAuth();
   const [lendingStats, setLendingStats] = useState<any>(null);
   const [availableOffers, setAvailableOffers] = useState<any[]>([]);
@@ -21,18 +23,18 @@ const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({ userActivity }) =
   useEffect(() => {
     const fetchBorrowingData = async () => {
       if (!lendingActor) return;
-      
+
       try {
         setLoading(true);
         const [stats, offers] = await Promise.all([
           lendingActor.get_lending_stats(),
-          lendingActor.get_active_loan_offers(null, null)
+          lendingActor.get_active_loan_offers(null, null),
         ]);
-        
+
         setLendingStats(stats);
         setAvailableOffers(offers.slice(0, 5));
       } catch (error) {
-        console.error('Failed to fetch borrowing data:', error);
+        console.error("Failed to fetch borrowing data:", error);
       } finally {
         setLoading(false);
       }
@@ -42,9 +44,9 @@ const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({ userActivity }) =
   }, [lendingActor]);
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(amount);
@@ -59,8 +61,10 @@ const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({ userActivity }) =
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-xl text-gray-400">Loading borrowing dashboard...</div>
+      <div className="flex h-64 items-center justify-center">
+        <div className="text-xl text-gray-400">
+          Loading borrowing dashboard...
+        </div>
       </div>
     );
   }
@@ -68,14 +72,14 @@ const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({ userActivity }) =
   return (
     <div className="space-y-6">
       {/* Borrower Hero */}
-      <Card className="bg-gradient-to-r from-orange-600/20 to-red-600/20 border-orange-500/30">
+      <Card className="border-orange-500/30 bg-gradient-to-r from-orange-600/20 to-red-600/20">
         <div className="flex items-center justify-between">
           <div>
-            <div className="flex items-center mb-4">
-              <span className="text-4xl mr-3">💰</span>
+            <div className="mb-4 flex items-center">
+              <span className="mr-3 text-4xl">💰</span>
               <h1 className="text-3xl font-bold text-white">Borrowing Hub</h1>
             </div>
-            <p className="text-xl text-gray-300 mb-4">
+            <p className="mb-4 text-xl text-gray-300">
               Access liquidity with your verified assets as collateral
             </p>
             <div className="flex items-center space-x-4">
@@ -87,7 +91,9 @@ const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({ userActivity }) =
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-green-400">
-                  {formatCurrency(calculateMaxLoan(userActivity.reputationScore))}
+                  {formatCurrency(
+                    calculateMaxLoan(userActivity.reputationScore),
+                  )}
                 </div>
                 <div className="text-sm text-gray-400">Max Loan</div>
               </div>
@@ -111,20 +117,22 @@ const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({ userActivity }) =
       {/* Loan Status */}
       {userActivity.hasLoans && (
         <Card title="Your Active Loans">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-4 bg-red-900/30 border border-red-600 rounded">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <div className="rounded border border-red-600 bg-red-900/30 p-4">
               <div className="text-lg font-bold text-red-400">$45,000</div>
-              <div className="text-sm text-gray-400 mb-2">Outstanding Balance</div>
+              <div className="mb-2 text-sm text-gray-400">
+                Outstanding Balance
+              </div>
               <div className="text-xs text-gray-500">Due in 180 days</div>
             </div>
-            <div className="p-4 bg-blue-900/30 border border-blue-600 rounded">
+            <div className="rounded border border-blue-600 bg-blue-900/30 p-4">
               <div className="text-lg font-bold text-blue-400">8.5%</div>
-              <div className="text-sm text-gray-400 mb-2">Current APR</div>
+              <div className="mb-2 text-sm text-gray-400">Current APR</div>
               <div className="text-xs text-gray-500">Fixed rate</div>
             </div>
-            <div className="p-4 bg-green-900/30 border border-green-600 rounded">
+            <div className="rounded border border-green-600 bg-green-900/30 p-4">
               <div className="text-lg font-bold text-green-400">85%</div>
-              <div className="text-sm text-gray-400 mb-2">Health Ratio</div>
+              <div className="mb-2 text-sm text-gray-400">Health Ratio</div>
               <div className="text-xs text-gray-500">Good standing</div>
             </div>
           </div>
@@ -132,11 +140,11 @@ const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({ userActivity }) =
       )}
 
       {/* Asset Requirements */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <Card title="Collateral Requirements">
           <div className="space-y-4">
-            <div className="p-3 bg-gray-800 rounded-lg">
-              <div className="flex justify-between items-center mb-2">
+            <div className="rounded-lg bg-gray-800 p-3">
+              <div className="mb-2 flex items-center justify-between">
                 <span className="font-medium text-white">Real Estate</span>
                 <span className="text-green-400">Up to 80% LTV</span>
               </div>
@@ -144,17 +152,19 @@ const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({ userActivity }) =
                 Property deeds, appraisals, insurance documents required
               </div>
             </div>
-            <div className="p-3 bg-gray-800 rounded-lg">
-              <div className="flex justify-between items-center mb-2">
-                <span className="font-medium text-white">Art & Collectibles</span>
+            <div className="rounded-lg bg-gray-800 p-3">
+              <div className="mb-2 flex items-center justify-between">
+                <span className="font-medium text-white">
+                  Art & Collectibles
+                </span>
                 <span className="text-yellow-400">Up to 60% LTV</span>
               </div>
               <div className="text-xs text-gray-400">
                 Authentication certificates, provenance, appraisal needed
               </div>
             </div>
-            <div className="p-3 bg-gray-800 rounded-lg">
-              <div className="flex justify-between items-center mb-2">
+            <div className="rounded-lg bg-gray-800 p-3">
+              <div className="mb-2 flex items-center justify-between">
                 <span className="font-medium text-white">Luxury Goods</span>
                 <span className="text-orange-400">Up to 50% LTV</span>
               </div>
@@ -167,26 +177,30 @@ const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({ userActivity }) =
 
         <Card title="Loan Process">
           <div className="space-y-4">
-            <div className="flex items-center p-3 bg-green-900/30 border border-green-600 rounded">
-              <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center text-white font-bold text-sm mr-3">
+            <div className="flex items-center rounded border border-green-600 bg-green-900/30 p-3">
+              <div className="mr-3 flex h-8 w-8 items-center justify-center rounded-full bg-green-600 text-sm font-bold text-white">
                 1
               </div>
               <div>
                 <div className="font-medium text-white">Upload Assets</div>
-                <div className="text-xs text-gray-400">AI verifies authenticity</div>
+                <div className="text-xs text-gray-400">
+                  AI verifies authenticity
+                </div>
               </div>
             </div>
-            <div className="flex items-center p-3 bg-blue-900/30 border border-blue-600 rounded">
-              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm mr-3">
+            <div className="flex items-center rounded border border-blue-600 bg-blue-900/30 p-3">
+              <div className="mr-3 flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white">
                 2
               </div>
               <div>
                 <div className="font-medium text-white">Get Valuation</div>
-                <div className="text-xs text-gray-400">Market price analysis</div>
+                <div className="text-xs text-gray-400">
+                  Market price analysis
+                </div>
               </div>
             </div>
-            <div className="flex items-center p-3 bg-purple-900/30 border border-purple-600 rounded">
-              <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm mr-3">
+            <div className="flex items-center rounded border border-purple-600 bg-purple-900/30 p-3">
+              <div className="mr-3 flex h-8 w-8 items-center justify-center rounded-full bg-purple-600 text-sm font-bold text-white">
                 3
               </div>
               <div>
@@ -201,12 +215,12 @@ const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({ userActivity }) =
       {/* Available Loan Offers */}
       <Card title="Best Loan Offers for You">
         {availableOffers.length === 0 ? (
-          <div className="text-center py-8">
-            <div className="text-4xl mb-4">🔍</div>
-            <h3 className="text-xl font-semibold text-white mb-2">
+          <div className="py-8 text-center">
+            <div className="mb-4 text-4xl">🔍</div>
+            <h3 className="mb-2 text-xl font-semibold text-white">
               No Matching Offers
             </h3>
-            <p className="text-gray-400 mb-4">
+            <p className="mb-4 text-gray-400">
               Upload your assets to get personalized loan offers
             </p>
             <Link to="/verify-assets">
@@ -253,7 +267,7 @@ const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({ userActivity }) =
                       {offer.duration_days} days
                     </td>
                     <td className="px-4 py-3 text-sm">
-                      <Button className="bg-green-600 hover:bg-green-700 text-xs px-3 py-1">
+                      <Button className="bg-green-600 px-3 py-1 text-xs hover:bg-green-700">
                         Apply
                       </Button>
                     </td>
