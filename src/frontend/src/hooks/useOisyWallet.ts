@@ -108,11 +108,14 @@ export function useOisyWallet() {
     const principal = icrcAccount.owner;
     const accountIdentifier = AccountIdentifier.fromPrincipal({ principal });
 
-    const host = process.env.DFX_NETWORK === 'local' ? 'http://127.0.0.1:4943' : 'https://icp0.io';
+    const host =
+      process.env.DFX_NETWORK === "local"
+        ? "http://127.0.0.1:4943"
+        : "https://icp0.io";
     const defaultAgent = await HttpAgent.create({ host });
-    
+
     // For local development, disable certificate verification
-    if (process.env.DFX_NETWORK === 'local') {
+    if (process.env.DFX_NETWORK === "local") {
       await defaultAgent.fetchRootKey();
     }
     const signerAgent = await SignerAgent.create({

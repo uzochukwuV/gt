@@ -67,16 +67,16 @@ export const usePlugWallet = (): UsePlugWalletReturn => {
 
     const plug = window.ic!.plug!;
     const agent = plug.agent || null;
-    
+
     // For local development, ensure root key is fetched
-    if (agent && process.env.DFX_NETWORK === 'local') {
+    if (agent && process.env.DFX_NETWORK === "local") {
       try {
         await agent.fetchRootKey();
       } catch (error) {
-        console.warn('Failed to fetch root key for local development:', error);
+        console.warn("Failed to fetch root key for local development:", error);
       }
     }
-    
+
     setAgent(agent);
     setIsWalletLocked(plug.isWalletLocked || false);
 
