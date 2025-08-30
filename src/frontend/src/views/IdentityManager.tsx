@@ -5,15 +5,15 @@ import { Card, Button } from "../components";
 import type { Identity, PrivacySettings } from "../../../declarations/backend";
 
 const IdentityManager = () => {
-  const { 
-    isAuthenticated, 
-    connectPlug, 
-    connectOisy, 
-    backendActor, 
-    walletType, 
-    plugAvailable, 
-    loading: walletLoading, 
-    error: walletError 
+  const {
+    isAuthenticated,
+    connectPlug,
+    connectOisy,
+    backendActor,
+    walletType,
+    plugAvailable,
+    loading: walletLoading,
+    error: walletError,
   } = useAuth();
   const [identities, setIdentities] = useState<Identity[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -79,7 +79,7 @@ const IdentityManager = () => {
           <p className="mb-6 text-gray-400">
             Please connect your wallet to manage your digital identities.
           </p>
-          
+
           {/* Wallet connection errors */}
           {walletError && (
             <div className="mb-4 rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700">
@@ -90,16 +90,19 @@ const IdentityManager = () => {
           <div className="space-y-4">
             {/* Plug Wallet (Primary Option) */}
             <div>
-              <Button 
-                onClick={connectPlug} 
+              <Button
+                onClick={connectPlug}
                 disabled={!plugAvailable || walletLoading}
                 className="w-full"
               >
-                {walletLoading ? "Connecting..." : "🔌 Connect with Plug Wallet"}
+                {walletLoading
+                  ? "Connecting..."
+                  : "🔌 Connect with Plug Wallet"}
               </Button>
               {!plugAvailable && (
                 <p className="mt-2 text-xs text-gray-500">
-                  Plug wallet not detected. Please install the Plug browser extension.
+                  Plug wallet not detected. Please install the Plug browser
+                  extension.
                 </p>
               )}
             </div>
@@ -113,8 +116,8 @@ const IdentityManager = () => {
 
             {/* Oisy Wallet (Alternative Option) */}
             <div>
-              <Button 
-                onClick={connectOisy} 
+              <Button
+                onClick={connectOisy}
                 disabled={walletLoading}
                 className="w-full bg-gray-600 hover:bg-gray-700"
               >
@@ -146,11 +149,14 @@ const IdentityManager = () => {
             <div className="flex items-center space-x-2">
               <div className="h-2 w-2 rounded-full bg-green-500"></div>
               <span className="text-sm text-gray-300">
-                Connected with {walletType === 'plug' ? '🔌 Plug' : 'Oisy'} Wallet
+                Connected with {walletType === "plug" ? "🔌 Plug" : "Oisy"}{" "}
+                Wallet
               </span>
             </div>
             <button
-              onClick={() => { /* logout functionality will be handled by parent */ }}
+              onClick={() => {
+                /* logout functionality will be handled by parent */
+              }}
               className="text-sm text-red-400 hover:text-red-300"
             >
               Disconnect

@@ -10,7 +10,7 @@ import { useOisyWallet } from "../hooks/useOisyWallet";
 import { usePlugWallet } from "../hooks/usePlugWallet";
 import { Principal } from "@dfinity/principal";
 
-export type WalletType = 'plug' | 'oisy';
+export type WalletType = "plug" | "oisy";
 
 export const AuthContext = createContext<{
   isAuthenticated: boolean;
@@ -44,12 +44,12 @@ export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   // Oisy wallet hook
-  const { 
-    connect: oisyConnect, 
-    disconnect: oisyDisconnect, 
-    isConnected: oisyConnected, 
-    principal: oisyPrincipal, 
-    oisySignerAgent 
+  const {
+    connect: oisyConnect,
+    disconnect: oisyDisconnect,
+    isConnected: oisyConnected,
+    principal: oisyPrincipal,
+    oisySignerAgent,
   } = useOisyWallet();
 
   // Plug wallet hook
@@ -80,9 +80,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   // Update wallet type when connection changes
   useEffect(() => {
     if (plugConnected) {
-      setWalletType('plug');
+      setWalletType("plug");
     } else if (oisyConnected) {
-      setWalletType('oisy');
+      setWalletType("oisy");
     } else {
       setWalletType(null);
     }

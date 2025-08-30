@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Principal } from '@dfinity/principal';
-import { HttpAgent } from '@dfinity/agent';
+import { useState, useEffect, useCallback } from "react";
+import { Principal } from "@dfinity/principal";
+import { HttpAgent } from "@dfinity/agent";
 
 declare global {
   interface Window {
@@ -47,27 +47,39 @@ export const usePlugWallet = (): UsePlugWalletReturn => {
   const [error, setError] = useState<string | null>(null);
 
   // Check if Plug is available
-  const isAvailable = typeof window !== 'undefined' && !!window.ic?.plug;
+  const isAvailable = typeof window !== "undefined" && !!window.ic?.plug;
 
   // Canister whitelist for this app
   const whitelist = [
-    process.env.CANISTER_ID_BACKEND || 'bd3sg-teaaa-aaaaa-qaaba-cai',
-    process.env.CANISTER_ID_LENDING || 'br5f7-7uaaa-aaaaa-qaaca-cai',
-    process.env.CANISTER_ID_MARKETPLACE || 'bw4dl-smaaa-aaaaa-qaacq-cai',
-    process.env.CANISTER_ID_AI_VERIFIER || 'bkyz2-fmaaa-aaaaa-qaaaq-cai',
+    process.env.CANISTER_ID_BACKEND || "bd3sg-teaaa-aaaaa-qaaba-cai",
+    process.env.CANISTER_ID_LENDING || "br5f7-7uaaa-aaaaa-qaaca-cai",
+    process.env.CANISTER_ID_MARKETPLACE || "bw4dl-smaaa-aaaaa-qaacq-cai",
+    process.env.CANISTER_ID_AI_VERIFIER || "bkyz2-fmaaa-aaaaa-qaaaq-cai",
   ];
 
-  const host = process.env.DFX_NETWORK === 'local' 
-    ? 'http://127.0.0.1:4943' 
-    : 'https://icp0.io';
+  const host =
+    process.env.DFX_NETWORK === "local"
+      ? "http://127.0.0.1:4943"
+      : "https://icp0.io";
 
-  const updateConnectionState = useCallback(() => {
+  const updateConnectionState = useCallback(async () => {
     if (!isAvailable) return;
 
     const plug = window.ic!.plug!;
-    setAgent(plug.agent || null);
-    setIsWalletLocked(plug.isWalletLocked || false);
+    const agent = plug.agent || null;
     
+    // For local development, ensure root key is fetched
+    if (agent && process.env.DFX_NETWORK === 'local') {
+      try {
+        await agent.fetchRootKey();
+      } catch (error) {
+        console.warn('Failed to fetch root key for local development:', error);
+      }
+    }
+    
+    setAgent(agent);
+    setIsWalletLocked(plug.isWalletLocked || false);
+
     if (plug.principalId) {
       setPrincipal(Principal.fromText(plug.principalId));
       setAccountId(plug.accountId || null);
@@ -79,7 +91,7 @@ export const usePlugWallet = (): UsePlugWalletReturn => {
 
   const connect = useCallback(async () => {
     if (!isAvailable) {
-      setError('Plug wallet is not available. Please install Plug extension.');
+      setError("Plug wallet is not available. Please install Plug extension.");
       return;
     }
 
@@ -93,12 +105,14 @@ export const usePlugWallet = (): UsePlugWalletReturn => {
         timeout: 50000,
       });
 
-      console.log('Connected to Plug:', result);
+      console.log("Connected to Plug:", result);
       setIsConnected(true);
-      updateConnectionState();
+      await updateConnectionState();
     } catch (err) {
-      console.error('Failed to connect to Plug:', err);
-      setError(err instanceof Error ? err.message : 'Failed to connect to Plug wallet');
+      console.error("Failed to connect to Plug:", err);
+      setError(
+        err instanceof Error ? err.message : "Failed to connect to Plug wallet",
+      );
       setIsConnected(false);
     } finally {
       setLoading(false);
@@ -118,8 +132,12 @@ export const usePlugWallet = (): UsePlugWalletReturn => {
       setAccountId(null);
       setAgent(null);
     } catch (err) {
-      console.error('Failed to disconnect from Plug:', err);
-      setError(err instanceof Error ? err.message : 'Failed to disconnect from Plug wallet');
+      console.error("Failed to disconnect from Plug:", err);
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to disconnect from Plug wallet",
+      );
     } finally {
       setLoading(false);
     }
@@ -131,16 +149,16 @@ export const usePlugWallet = (): UsePlugWalletReturn => {
     try {
       const connected = await window.ic!.plug!.isConnected();
       setIsConnected(connected);
-      
+
       if (connected) {
-        updateConnectionState();
+        await updateConnectionState();
       } else {
         setPrincipal(null);
         setAccountId(null);
         setAgent(null);
       }
     } catch (err) {
-      console.error('Failed to check Plug connection:', err);
+      console.error("Failed to check Plug connection:", err);
       setIsConnected(false);
     }
   }, [isAvailable, updateConnectionState]);
@@ -153,7 +171,7 @@ export const usePlugWallet = (): UsePlugWalletReturn => {
 
     // Set up event listeners
     const plug = window.ic!.plug!;
-    
+
     const handleExternalDisconnect = () => {
       setIsConnected(false);
       setPrincipal(null);
@@ -181,7 +199,7 @@ export const usePlugWallet = (): UsePlugWalletReturn => {
     const verifyConnection = async () => {
       const connected = await window.ic!.plug!.isConnected();
       if (connected) {
-        updateConnectionState();
+        await updateConnectionState();
         setIsConnected(true);
       }
     };
