@@ -211,6 +211,42 @@ thread_local! {
     static NEXT_ORDER_ID: std::cell::RefCell<u64> = const { std::cell::RefCell::new(1) };
 }
 
+// Security and validation functions
+fn validate_price(price: f64) -> Result<(), String> {
+    if price <= 0.0 {
+        return Err("Price must be positive".to_string());
+    }
+    if price > 1_000_000_000.0 {
+        return Err("Price exceeds maximum limit".to_string());
+    }
+    if price.is_nan() || price.is_infinite() {
+        return Err("Price must be a valid number".to_string());
+    }
+    Ok(())
+}
+
+fn validate_verification_score(score: f32) -> Result<(), String> {
+    if score < 0.0 || score > 1.0 {
+        return Err("Verification score must be between 0.0 and 1.0".to_string());
+    }
+    Ok(())
+}
+
+fn validate_expiration(expires_at: Option<u64>) -> Result<(), String> {
+    if let Some(expiry) = expires_at {
+        let current_time = ic_cdk::api::time();
+        let max_future = current_time + (365 * 24 * 3600 * 1_000_000_000); // 1 year max
+        
+        if expiry <= current_time {
+            return Err("Expiration time must be in the future".to_string());
+        }
+        if expiry > max_future {
+            return Err("Expiration time too far in the future (max 1 year)".to_string());
+        }
+    }
+    Ok(())
+}
+
 // Marketplace core functions
 #[update]
 pub async fn create_listing(
@@ -223,6 +259,11 @@ pub async fn create_listing(
     cross_chain_settlement: Option<CrossChainNetwork>,
 ) -> Result<u64, String> {
     let caller = ic_cdk::api::caller();
+    
+    // Validate inputs
+    validate_price(price)?;
+    validate_verification_score(minimum_verification_score)?;
+    validate_expiration(expires_at)?;
 
     // Verify asset exists and caller owns it
     let asset = ASSETS.with(|a| a.borrow().get(&asset_id));
@@ -233,6 +274,11 @@ pub async fn create_listing(
 
     if asset.owner != caller {
         return Err("Only asset owner can create listings".to_string());
+    }
+    
+    // Additional security checks
+    if asset.verification_score < 0.5 {
+        return Err("Asset verification score too low for marketplace".to_string());
     }
 
     // Check asset is verified
@@ -281,7 +327,16 @@ pub fn get_listings(
             .filter(|(_, listing)| listing.is_active)
             .filter(|(_, listing)| {
                 if let Some(ref pm) = payment_method {
-                    std::mem::discriminant(&listing.payment_method) == std::mem::discriminant(pm)
+                    // Proper payment method comparison
+                    match (pm, &listing.payment_method) {
+                        (PaymentMethod::ICP, PaymentMethod::ICP) => true,
+                        (PaymentMethod::Bitcoin, PaymentMethod::Bitcoin) => true,
+                        (PaymentMethod::Ethereum, PaymentMethod::Ethereum) => true,
+                        (PaymentMethod::USDC, PaymentMethod::USDC) => true,
+                        (PaymentMethod::USDT, PaymentMethod::USDT) => true,
+                        (PaymentMethod::Other(a), PaymentMethod::Other(b)) => a == b,
+                        _ => false,
+                    }
                 } else {
                     true
                 }
@@ -318,6 +373,9 @@ pub fn get_listings(
 #[update]
 pub async fn create_order(listing_id: u64, amount: f64) -> Result<u64, String> {
     let caller = ic_cdk::api::caller();
+    
+    // Validate order amount
+    validate_price(amount)?;
 
     // Get listing and validate
     let listing = LISTINGS.with(|l| l.borrow().get(&listing_id));

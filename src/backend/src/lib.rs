@@ -373,9 +373,34 @@ pub enum Error {
     InvalidInput(String),
     VerificationFailed(String),
     CanisterError(String),
+    EmergencyPause,
+    InsufficientSignatures,
+    OperationExpired,
 }
 
 type Result<T, E = Error> = std::result::Result<T, E>;
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct MultiSigOperation {
+    pub id: String,
+    pub operation_type: String,
+    pub operation_data: String,
+    pub required_signatures: u8,
+    pub signatures: Vec<Principal>,
+    pub created_at: u64,
+    pub expires_at: u64,
+    pub executed: bool,
+}
+
+impl Storable for MultiSigOperation {
+    fn to_bytes(&self) -> Cow<[u8]> {
+        Cow::Owned(Encode!(self).unwrap())
+    }
+    fn from_bytes(bytes: Cow<[u8]>) -> Self {
+        Decode!(bytes.as_ref(), Self).unwrap()
+    }
+    const BOUND: Bound = Bound::Unbounded;
+}
 
 //=============================================================================
 // GLOBAL STATE MANAGEMENT
@@ -421,6 +446,14 @@ thread_local! {
     static BRIDGE_SERVICE: RefCell<BridgeService> = RefCell::new(BridgeService::new());
 
     static FILE_STORAGE: RefCell<FileStorageService> = RefCell::new(FileStorageService::new());
+
+    static EMERGENCY_PAUSE: RefCell<bool> = const { RefCell::new(false) };
+
+    static MULTI_SIG_PENDING: RefCell<StableBTreeMap<String, MultiSigOperation, Memory>> = RefCell::new(
+        StableBTreeMap::init(
+            MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(9))),
+        )
+    );
 }
 
 //=============================================================================
@@ -523,7 +556,7 @@ fn validate_identity_id(identity_id: &str) -> Result<()> {
     }
 
     // Validate timestamp part is valid hex
-    if let Err(_) = u64::from_str_radix(parts[2], 16) {
+    if u64::from_str_radix(parts[2], 16).is_err() {
         return Err(Error::InvalidInput(
             "Invalid identity ID timestamp".to_string(),
         ));
@@ -629,11 +662,11 @@ fn check_rate_limit(operation_type: &str) -> Result<()> {
                         window_start: current_time,
                         last_operation: current_time,
                     };
-                    
+
                     if let Some(existing_violations) = vl.borrow().get(&violation_key) {
                         violation_tracker.count = existing_violations.count + 1;
                     }
-                    
+
                     vl.borrow_mut().insert(violation_key, violation_tracker);
                 });
                 return Err(Error::RateLimitExceeded);
@@ -699,6 +732,144 @@ fn is_admin() -> Result<()> {
     } else {
         Ok(())
     }
+}
+
+fn emergency_pause_check() -> Result<()> {
+    if EMERGENCY_PAUSE.with(|p| *p.borrow()) {
+        return Err(Error::EmergencyPause);
+    }
+    Ok(())
+}
+
+fn validate_asset_value(value: f64) -> Result<()> {
+    if value <= 0.0 {
+        return Err(Error::InvalidInput("Asset value must be positive".to_string()));
+    }
+    if value > 1_000_000_000.0 {
+        return Err(Error::InvalidInput("Asset value exceeds maximum limit".to_string()));
+    }
+    if value.is_nan() || value.is_infinite() {
+        return Err(Error::InvalidInput("Asset value must be a valid number".to_string()));
+    }
+    Ok(())
+}
+
+fn validate_timestamp(timestamp: u64) -> Result<()> {
+    let current_time = time();
+    let one_hour = 3600 * 1_000_000_000; // 1 hour in nanoseconds
+    
+    if timestamp > current_time + one_hour {
+        return Err(Error::InvalidInput("Timestamp too far in future".to_string()));
+    }
+    
+    // Allow timestamps from the past 100 years (reasonable for credentials)
+    let hundred_years = 100 * 365 * 24 * 3600 * 1_000_000_000u64;
+    if current_time > hundred_years && timestamp < current_time - hundred_years {
+        return Err(Error::InvalidInput("Timestamp too far in past".to_string()));
+    }
+    
+    Ok(())
+}
+
+async fn create_multi_sig_operation(
+    operation_type: String,
+    operation_data: String,
+    required_signatures: u8,
+) -> Result<String> {
+    let operation_id = generate_secure_random_id("multisig").await?;
+    let current_time = time();
+    
+    let operation = MultiSigOperation {
+        id: operation_id.clone(),
+        operation_type,
+        operation_data,
+        required_signatures,
+        signatures: vec![caller()], // Creator automatically signs
+        created_at: current_time,
+        expires_at: current_time + (24 * 3600 * 1_000_000_000), // 24 hours
+        executed: false,
+    };
+    
+    MULTI_SIG_PENDING.with(|pending| {
+        pending.borrow_mut().insert(operation_id.clone(), operation);
+    });
+    
+    Ok(operation_id)
+}
+
+#[update]
+async fn sign_multi_sig_operation(operation_id: String) -> Result<bool> {
+    let caller_principal = caller();
+    
+    // Only admins can sign multi-sig operations
+    is_admin()?;
+    
+    MULTI_SIG_PENDING.with(|pending| {
+        let mut pending_map = pending.borrow_mut();
+        
+        if let Some(mut operation) = pending_map.get(&operation_id) {
+            // Check if operation has expired
+            if time() > operation.expires_at {
+                pending_map.remove(&operation_id);
+                return Err(Error::OperationExpired);
+            }
+            
+            // Check if already executed
+            if operation.executed {
+                return Err(Error::InvalidInput("Operation already executed".to_string()));
+            }
+            
+            // Add signature if not already present
+            if !operation.signatures.contains(&caller_principal) {
+                operation.signatures.push(caller_principal);
+            }
+            
+            let has_enough_signatures = operation.signatures.len() as u8 >= operation.required_signatures;
+            
+            if has_enough_signatures {
+                operation.executed = true;
+                pending_map.insert(operation_id.clone(), operation.clone());
+                
+                // Execute the operation
+                match operation.operation_type.as_str() {
+                    "emergency_pause" => {
+                        EMERGENCY_PAUSE.with(|p| *p.borrow_mut() = true);
+                    },
+                    "emergency_unpause" => {
+                        EMERGENCY_PAUSE.with(|p| *p.borrow_mut() = false);
+                    },
+                    _ => return Err(Error::InvalidInput("Unknown operation type".to_string())),
+                }
+                
+                Ok(true) // Operation executed
+            } else {
+                pending_map.insert(operation_id, operation);
+                Ok(false) // More signatures needed
+            }
+        } else {
+            Err(Error::NotFound("Multi-sig operation not found".to_string()))
+        }
+    })
+}
+
+#[update]
+async fn emergency_pause() -> Result<String> {
+    is_admin()?;
+    create_multi_sig_operation(
+        "emergency_pause".to_string(),
+        "Emergency pause activated".to_string(),
+        2, // Require 2 admin signatures
+    ).await
+}
+
+#[update]
+async fn emergency_unpause() -> Result<String> {
+    is_admin()?;
+    create_multi_sig_operation(
+        "emergency_unpause".to_string(),
+        "Emergency pause deactivated".to_string(),
+        2, // Require 2 admin signatures
+    ).await
 }
 
 //=============================================================================
@@ -1057,12 +1228,13 @@ async fn create_identity(
 
 #[update]
 async fn add_credential(identity_id: String, credential: VerifiableCredential) -> Result<()> {
+    emergency_pause_check()?;
     check_rate_limit("add_credential")?;
     validate_identity_id(&identity_id)?;
 
     let caller = caller();
 
-    IDENTITIES.with(|identities| {
+    let _ = IDENTITIES.with(|identities| {
         let mut identities_map = identities.borrow_mut();
         if let Some(mut identity) = identities_map.get(&identity_id) {
             if identity.owner != caller {
@@ -1073,12 +1245,26 @@ async fn add_credential(identity_id: String, credential: VerifiableCredential) -
             identity.updated_at = time();
             identity.last_activity = time();
 
-            identities_map.insert(identity_id, identity);
+            identities_map.insert(identity_id.clone(), identity);
             Ok(())
         } else {
             Err(Error::NotFound("Identity not found".to_string()))
         }
-    })
+    });
+    // Create audit entry
+     create_audit_entry(
+        AuditOperation::AddCredential,
+        identity_id.clone(),
+        "credential".to_string(),
+        AuditDetails {
+            operation_specific_data: "{\"credential_added\":true}".to_string(),
+            sensitive_data_redacted: true,
+            related_entities: vec![],
+            compliance_notes: Some("Credential added to identity".to_string()),
+        },
+        OperationResult::Success,
+    );
+    Ok(())
 }
 
 #[update]
@@ -1087,6 +1273,7 @@ async fn link_wallet(
     chain_type: ChainType,
     wallet_address: String,
 ) -> Result<()> {
+    emergency_pause_check()?;
     check_rate_limit("link_wallet")?;
     validate_identity_id(&identity_id)?;
     validate_wallet_address(&wallet_address, &chain_type)?;
@@ -1267,6 +1454,7 @@ async fn link_wallet_verified(
 
 #[update]
 async fn link_asset(identity_id: String, asset_id: String) -> Result<()> {
+    emergency_pause_check()?;
     check_rate_limit("link_asset")?;
     validate_identity_id(&identity_id)?;
 
@@ -1313,7 +1501,9 @@ async fn link_asset(identity_id: String, asset_id: String) -> Result<()> {
 
 #[update]
 async fn update_reputation(identity_id: String, score_change: f64, reason: String) -> Result<()> {
+    emergency_pause_check()?;
     validate_identity_id(&identity_id)?;
+    validate_asset_value(score_change.abs())?;
 
     IDENTITIES.with(|identities| {
         let mut identities_map = identities.borrow_mut();

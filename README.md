@@ -23,7 +23,7 @@ A comprehensive decentralized identity verification and asset authentication pla
 The Global Trust Verification Platform addresses the critical need for secure, verifiable digital identity and asset authentication across multiple blockchains. Our solution combines:
 
 - **Decentralized Identity Management** - Self-sovereign identity with privacy controls
-- **AI-Powered Verification** - Advanced fraud detection and authenticity scoring  
+- **AI-Powered Verification** - Advanced fraud detection and authenticity scoring
 - **Cross-Chain Interoperability** - Seamless asset bridging across Bitcoin, Ethereum, Solana, and ICP
 - **Marketplace Integration** - Trade verified assets with confidence scores
 - **DeFi Lending** - Collateralize verified assets for loans
@@ -36,34 +36,34 @@ graph TB
         FE[React/Vite Frontend]
         FE --> |API Calls| BE
     end
-    
+
     subgraph "ICP Canisters"
         BE[Backend Canister]
         AI[AI Verifier Canister]
         MP[Marketplace Canister]
         LN[Lending Canister]
-        
+
         BE --> AI
         BE --> MP
         BE --> LN
     end
-    
+
     subgraph "Cross-Chain Networks"
         BTC[Bitcoin Network]
         ETH[Ethereum Network]
         SOL[Solana Network]
         ICP[Internet Computer]
-        
+
         BE --> BTC
         BE --> ETH
         BE --> SOL
     end
-    
+
     subgraph "Storage & Services"
         FS[File Storage]
         ID[Identity Management]
         BR[Cross-Chain Bridge]
-        
+
         BE --> FS
         BE --> ID
         BE --> BR
@@ -73,30 +73,35 @@ graph TB
 ## ✨ Features
 
 ### 🆔 Identity Management
+
 - **Self-Sovereign Identities** - User-controlled identity creation and management
 - **Privacy Controls** - Granular visibility settings across chains
 - **Reputation System** - Dynamic scoring based on verified activities
 - **DID Integration** - W3C Decentralized Identifier compliance
 
 ### 🔍 AI-Powered Verification
+
 - **Document Authenticity** - Advanced OCR and tampering detection
 - **Asset Valuation** - Market comparison and fraud scoring
 - **Behavioral Analysis** - Pattern recognition for anomaly detection
 - **Multi-Model Ensemble** - Combined AI models for higher accuracy
 
 ### 🌉 Cross-Chain Bridge
+
 - **Multi-Network Support** - Bitcoin, Ethereum, Solana, ICP
 - **Dynamic Fee Calculation** - Real-time fee estimation
 - **Transaction Tracking** - Complete audit trail
 - **Security Features** - Multi-signature validation
 
 ### 🏪 Marketplace
+
 - **Verified Asset Trading** - Only authenticated assets can be listed
 - **Confidence Scoring** - AI-generated trust metrics
 - **Escrow Services** - Secure transaction handling
 - **Cross-Chain Settlement** - Multi-network payment support
 
 ### 💰 DeFi Lending
+
 - **Asset Collateralization** - Use verified assets as collateral
 - **Dynamic Interest Rates** - Market-driven loan pricing
 - **Automated Liquidation** - Smart contract protection
@@ -114,27 +119,32 @@ graph TB
 ### Local Development Setup
 
 1. **Clone the Repository**
+
 ```bash
 git clone https://github.com/uzochukwuv/gt.git
 cd gt
 ```
 
 2. **Install Dependencies**
+
 ```bash
 npm install
 ```
 
 3. **Start Local DFX**
+
 ```bash
 dfx start --clean --background
 ```
 
 4. **Deploy Canisters**
+
 ```bash
 dfx deploy
 ```
 
 5. **Start Frontend Development Server**
+
 ```bash
 npm run dev
 ```
@@ -183,6 +193,7 @@ gtv2/
 ## 🌍 Deployment
 
 ### Local Deployment
+
 ```bash
 dfx deploy
 ```
@@ -190,11 +201,13 @@ dfx deploy
 ### ICP Mainnet Deployment
 
 1. **Get Cycles**
+
    - Visit https://faucet.dfinity.org
    - Get faucet coupon
    - Redeem: `dfx cycles redeem-faucet-coupon <COUPON> --network ic`
 
 2. **Deploy to Mainnet**
+
 ```bash
 dfx deploy --network ic
 ```
@@ -206,32 +219,38 @@ dfx deploy --network ic
 
 ### 🆕 New Features Built This Round
 
-#### 1. **Cross-Chain Bridge Service** 
+#### 1. **Cross-Chain Bridge Service**
+
 - **Implementation:** Complete bridge infrastructure supporting 3 major chains
 - **Files:** `src/backend/src/v1.rs`, `src/frontend/src/services/bridgeService.ts`
 - **Features:** Dynamic fee calculation, transaction tracking, multi-signature validation
 
 #### 2. **File Storage System**
+
 - **Implementation:** Decentralized file storage with metadata tracking
 - **Files:** `src/backend/src/lib.rs` (storage functions), `src/frontend/src/services/fileService.ts`
 - **Features:** 10MB file limit, hash verification, asset association
 
 #### 3. **Marketplace Integration**
+
 - **Implementation:** Complete asset trading platform with verification requirements
 - **Files:** `src/marketplace/src/lib.rs`, `src/frontend/src/views/Marketplace.tsx`
 - **Features:** Confidence scoring, escrow services, cross-chain payments
 
 #### 4. **DeFi Lending Platform**
+
 - **Implementation:** Asset-backed lending with automated liquidation
-- **Files:** `src/lending/src/lib.rs`, `src/frontend/src/views/Lending.tsx`  
+- **Files:** `src/lending/src/lib.rs`, `src/frontend/src/views/Lending.tsx`
 - **Features:** Dynamic interest rates, LTV ratios, multi-chain collateral
 
 #### 5. **AI Verification Engine**
+
 - **Implementation:** Multi-model AI system for asset and document verification
 - **Files:** `src/ai_verifier/src/lib.rs`
 - **Features:** Fraud scoring, authenticity detection, behavioral analysis
 
 #### 6. **Enhanced Frontend**
+
 - **Implementation:** Complete React UI with real-time data integration
 - **Files:** `src/frontend/src/views/`, `src/frontend/src/services/`
 - **Features:** Dashboard analytics, transaction history, file management
@@ -249,13 +268,14 @@ dfx deploy --network ic
 We maintain comprehensive testing with 95% service coverage. See [TEST_RESULTS.md](./TEST_RESULTS.md) for detailed test results including:
 
 - ✅ Identity management (100% working)
-- ✅ File storage (100% working)  
+- ✅ File storage (100% working)
 - ✅ Cross-chain bridge (100% working)
 - ✅ Marketplace (100% working)
 - ✅ Lending platform (100% working)
 - ⚠️ AI verifier (95% working - minor deployment issue)
 
 ### Run Tests
+
 ```bash
 # Backend canister tests
 dfx canister call backend get_identity_stats
@@ -298,4 +318,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Built with ❤️ on the Internet Computer Protocol**
 
-*Empowering trust in the decentralized world through verifiable identity and AI-powered authentication.*
+_Empowering trust in the decentralized world through verifiable identity and AI-powered authentication._

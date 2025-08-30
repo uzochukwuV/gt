@@ -1,6 +1,6 @@
 use candid::{CandidType, Principal};
 use ic_cdk::api::time;
-use ic_cdk_macros::{query, update, init, export_candid};
+use ic_cdk_macros::{export_candid, init, query, update};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -342,7 +342,10 @@ fn generate_mock_detailed_analysis(asset_type: &str) -> DetailedAnalysis {
             quality_score: 0.88,
             ocr_confidence: 0.95,
             document_type_confidence: 0.89,
-            security_features: vec!["Watermark detected".to_string(), "Digital signature valid".to_string()],
+            security_features: vec![
+                "Watermark detected".to_string(),
+                "Digital signature valid".to_string(),
+            ],
             anomalies: vec![],
             issuer_verification: IssuerVerification {
                 issuer_verified: true,
@@ -356,34 +359,33 @@ fn generate_mock_detailed_analysis(asset_type: &str) -> DetailedAnalysis {
     analysis.asset_analysis = Some(AssetAnalysis {
         valuation_confidence: 0.87,
         market_comparison_score: 0.84,
-        authenticity_indicators: vec!["Consistent metadata".to_string(), "Valid provenance".to_string()],
+        authenticity_indicators: vec![
+            "Consistent metadata".to_string(),
+            "Valid provenance".to_string(),
+        ],
         risk_indicators: vec![],
         market_analysis: MarketAnalysis {
             current_market_value: 1000.0,
             value_trend: 1.05,
             market_volatility: 0.12,
-            comparable_assets: vec![
-                ComparableAsset {
-                    asset_id: "similar_asset_1".to_string(),
-                    similarity_score: 0.89,
-                    recent_sale_price: 950.0,
-                    sale_date: time() - 86400000000000, // 1 day ago
-                }
-            ],
+            comparable_assets: vec![ComparableAsset {
+                asset_id: "similar_asset_1".to_string(),
+                similarity_score: 0.89,
+                recent_sale_price: 950.0,
+                sale_date: time() - 86400000000000, // 1 day ago
+            }],
         },
         provenance_verification: ProvenanceVerification {
             chain_of_custody_score: 0.93,
             ownership_chain_valid: true,
             authenticity_certificates: vec!["cert_123".to_string()],
-            historical_ownership: vec![
-                OwnershipRecord {
-                    owner: "original_creator".to_string(),
-                    from_date: time() - 2592000000000000, // 30 days ago
-                    to_date: Some(time() - 86400000000000), // 1 day ago
-                    verification_method: "Digital signature".to_string(),
-                    confidence: 0.95,
-                }
-            ],
+            historical_ownership: vec![OwnershipRecord {
+                owner: "original_creator".to_string(),
+                from_date: time() - 2592000000000000, // 30 days ago
+                to_date: Some(time() - 86400000000000), // 1 day ago
+                verification_method: "Digital signature".to_string(),
+                confidence: 0.95,
+            }],
         },
     });
 
@@ -408,7 +410,9 @@ pub fn submit_asset_verification_request(
 
     // Set initial status
     VERIFICATION_STATUS.with(|status| {
-        status.borrow_mut().insert(request_id.clone(), VerificationStatus::Processing);
+        status
+            .borrow_mut()
+            .insert(request_id.clone(), VerificationStatus::Processing);
     });
 
     // Generate mock verification result
@@ -423,20 +427,18 @@ pub fn submit_asset_verification_request(
         human_review_required: false,
         processed_at: time(),
         expires_at: time() + 2592000000000000, // 30 days from now
-        processing_time_ms: 2500, // Mock processing time
+        processing_time_ms: 2500,              // Mock processing time
         quality_score: 0.89,
-        risk_factors: vec![
-            RiskFactor {
-                factor_type: "Verification History".to_string(),
-                description: "Asset has limited verification history".to_string(),
-                severity: RiskLevel::Low,
-                confidence: 0.75,
-                likelihood: 0.3,
-                impact_score: 0.2,
-                evidence: vec!["New asset ID".to_string()],
-                mitigation_suggestions: vec!["Increase verification documentation".to_string()],
-            }
-        ],
+        risk_factors: vec![RiskFactor {
+            factor_type: "Verification History".to_string(),
+            description: "Asset has limited verification history".to_string(),
+            severity: RiskLevel::Low,
+            confidence: 0.75,
+            likelihood: 0.3,
+            impact_score: 0.2,
+            evidence: vec!["New asset ID".to_string()],
+            mitigation_suggestions: vec!["Increase verification documentation".to_string()],
+        }],
         recommendations: vec![
             "Asset appears authentic with high confidence".to_string(),
             "Consider additional verification for high-value transactions".to_string(),
@@ -452,7 +454,9 @@ pub fn submit_asset_verification_request(
 
     // Update status to completed
     VERIFICATION_STATUS.with(|status| {
-        status.borrow_mut().insert(request_id.clone(), VerificationStatus::Completed);
+        status
+            .borrow_mut()
+            .insert(request_id.clone(), VerificationStatus::Completed);
     });
 
     Ok(request_id)
@@ -460,21 +464,17 @@ pub fn submit_asset_verification_request(
 
 #[query]
 pub fn get_asset_verification_result(request_id: String) -> Result<AIVerificationResult, String> {
-    VERIFICATION_RESULTS.with(|results| {
-        match results.borrow().get(&request_id) {
-            Some(result) => Ok(result.clone()),
-            None => Err("Verification result not found".to_string()),
-        }
+    VERIFICATION_RESULTS.with(|results| match results.borrow().get(&request_id) {
+        Some(result) => Ok(result.clone()),
+        None => Err("Verification result not found".to_string()),
     })
 }
 
 #[query]
 pub fn get_asset_verification_status(request_id: String) -> Result<VerificationStatus, String> {
-    VERIFICATION_STATUS.with(|status| {
-        match status.borrow().get(&request_id) {
-            Some(status) => Ok(status.clone()),
-            None => Err("Verification request not found".to_string()),
-        }
+    VERIFICATION_STATUS.with(|status| match status.borrow().get(&request_id) {
+        Some(status) => Ok(status.clone()),
+        None => Err("Verification request not found".to_string()),
     })
 }
 
@@ -537,7 +537,7 @@ pub fn estimate_verification_cost(
 pub fn cleanup_expired_results() -> Result<u32, String> {
     let current_time = time();
     let mut cleaned_count = 0u32;
-    
+
     VERIFICATION_RESULTS.with(|results| {
         let mut results_map = results.borrow_mut();
         let expired_keys: Vec<String> = results_map
@@ -545,7 +545,7 @@ pub fn cleanup_expired_results() -> Result<u32, String> {
             .filter(|(_, result)| result.expires_at < current_time)
             .map(|(key, _)| key.clone())
             .collect();
-        
+
         for key in expired_keys {
             results_map.remove(&key);
             cleaned_count += 1;
