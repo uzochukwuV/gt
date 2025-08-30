@@ -743,13 +743,19 @@ fn emergency_pause_check() -> Result<()> {
 
 fn validate_asset_value(value: f64) -> Result<()> {
     if value <= 0.0 {
-        return Err(Error::InvalidInput("Asset value must be positive".to_string()));
+        return Err(Error::InvalidInput(
+            "Asset value must be positive".to_string(),
+        ));
     }
     if value > 1_000_000_000.0 {
-        return Err(Error::InvalidInput("Asset value exceeds maximum limit".to_string()));
+        return Err(Error::InvalidInput(
+            "Asset value exceeds maximum limit".to_string(),
+        ));
     }
     if value.is_nan() || value.is_infinite() {
-        return Err(Error::InvalidInput("Asset value must be a valid number".to_string()));
+        return Err(Error::InvalidInput(
+            "Asset value must be a valid number".to_string(),
+        ));
     }
     Ok(())
 }
@@ -757,17 +763,19 @@ fn validate_asset_value(value: f64) -> Result<()> {
 fn validate_timestamp(timestamp: u64) -> Result<()> {
     let current_time = time();
     let one_hour = 3600 * 1_000_000_000; // 1 hour in nanoseconds
-    
+
     if timestamp > current_time + one_hour {
-        return Err(Error::InvalidInput("Timestamp too far in future".to_string()));
+        return Err(Error::InvalidInput(
+            "Timestamp too far in future".to_string(),
+        ));
     }
-    
+
     // Allow timestamps from the past 100 years (reasonable for credentials)
     let hundred_years = 100 * 365 * 24 * 3600 * 1_000_000_000u64;
     if current_time > hundred_years && timestamp < current_time - hundred_years {
         return Err(Error::InvalidInput("Timestamp too far in past".to_string()));
     }
-    
+
     Ok(())
 }
 
@@ -778,7 +786,7 @@ async fn create_multi_sig_operation(
 ) -> Result<String> {
     let operation_id = generate_secure_random_id("multisig").await?;
     let current_time = time();
-    
+
     let operation = MultiSigOperation {
         id: operation_id.clone(),
         operation_type,
@@ -789,58 +797,61 @@ async fn create_multi_sig_operation(
         expires_at: current_time + (24 * 3600 * 1_000_000_000), // 24 hours
         executed: false,
     };
-    
+
     MULTI_SIG_PENDING.with(|pending| {
         pending.borrow_mut().insert(operation_id.clone(), operation);
     });
-    
+
     Ok(operation_id)
 }
 
 #[update]
 async fn sign_multi_sig_operation(operation_id: String) -> Result<bool> {
     let caller_principal = caller();
-    
+
     // Only admins can sign multi-sig operations
     is_admin()?;
-    
+
     MULTI_SIG_PENDING.with(|pending| {
         let mut pending_map = pending.borrow_mut();
-        
+
         if let Some(mut operation) = pending_map.get(&operation_id) {
             // Check if operation has expired
             if time() > operation.expires_at {
                 pending_map.remove(&operation_id);
                 return Err(Error::OperationExpired);
             }
-            
+
             // Check if already executed
             if operation.executed {
-                return Err(Error::InvalidInput("Operation already executed".to_string()));
+                return Err(Error::InvalidInput(
+                    "Operation already executed".to_string(),
+                ));
             }
-            
+
             // Add signature if not already present
             if !operation.signatures.contains(&caller_principal) {
                 operation.signatures.push(caller_principal);
             }
-            
-            let has_enough_signatures = operation.signatures.len() as u8 >= operation.required_signatures;
-            
+
+            let has_enough_signatures =
+                operation.signatures.len() as u8 >= operation.required_signatures;
+
             if has_enough_signatures {
                 operation.executed = true;
                 pending_map.insert(operation_id.clone(), operation.clone());
-                
+
                 // Execute the operation
                 match operation.operation_type.as_str() {
                     "emergency_pause" => {
                         EMERGENCY_PAUSE.with(|p| *p.borrow_mut() = true);
-                    },
+                    }
                     "emergency_unpause" => {
                         EMERGENCY_PAUSE.with(|p| *p.borrow_mut() = false);
-                    },
+                    }
                     _ => return Err(Error::InvalidInput("Unknown operation type".to_string())),
                 }
-                
+
                 Ok(true) // Operation executed
             } else {
                 pending_map.insert(operation_id, operation);
@@ -859,7 +870,8 @@ async fn emergency_pause() -> Result<String> {
         "emergency_pause".to_string(),
         "Emergency pause activated".to_string(),
         2, // Require 2 admin signatures
-    ).await
+    )
+    .await
 }
 
 #[update]
@@ -869,7 +881,8 @@ async fn emergency_unpause() -> Result<String> {
         "emergency_unpause".to_string(),
         "Emergency pause deactivated".to_string(),
         2, // Require 2 admin signatures
-    ).await
+    )
+    .await
 }
 
 //=============================================================================
@@ -1252,7 +1265,7 @@ async fn add_credential(identity_id: String, credential: VerifiableCredential) -
         }
     });
     // Create audit entry
-     create_audit_entry(
+    create_audit_entry(
         AuditOperation::AddCredential,
         identity_id.clone(),
         "credential".to_string(),

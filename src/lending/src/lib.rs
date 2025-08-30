@@ -182,7 +182,7 @@ fn validate_loan_amount(amount: f64) -> Result<(), String> {
 }
 
 fn validate_interest_rate(rate: f32) -> Result<(), String> {
-    if rate < 0.0 || rate > 100.0 {
+    if !(0.0..=100.0).contains(&rate) {
         return Err("Interest rate must be between 0-100%".to_string());
     }
     Ok(())
@@ -197,7 +197,7 @@ fn validate_ltv_ratio(ltv: f32) -> Result<(), String> {
 
 fn calculate_dynamic_liquidation_threshold(asset_type: &AssetType, ltv_ratio: f32) -> f32 {
     let base_threshold = ltv_ratio * 1.2; // 20% base buffer
-    
+
     // Adjust based on asset volatility
     let volatility_multiplier = match asset_type {
         AssetType::RealEstate => 1.1,  // Low volatility
@@ -207,7 +207,7 @@ fn calculate_dynamic_liquidation_threshold(asset_type: &AssetType, ltv_ratio: f3
         AssetType::Collectible => 1.6, // Very high volatility
         AssetType::Other(_) => 1.3,    // Default medium
     };
-    
+
     (base_threshold * volatility_multiplier).min(0.95) // Cap at 95%
 }
 
@@ -229,26 +229,26 @@ fn emergency_unpause() -> Result<(), String> {
 #[update]
 fn check_liquidations() -> Vec<u64> {
     let mut loans_to_liquidate = Vec::new();
-    
+
     LOANS.with(|loans| {
         for (loan_id, loan) in loans.borrow().iter() {
             if loan.status == LoanStatus::Active {
                 // Get current asset value (mock implementation - would use price oracle)
                 let current_value = get_asset_current_value(&loan.collateral_asset);
                 let current_ltv = loan.loan_amount_usd / current_value;
-                
+
                 if current_ltv >= loan.liquidation_threshold as f64 {
                     loans_to_liquidate.push(loan_id);
                 }
             }
         }
     });
-    
+
     // Process liquidations
     for loan_id in &loans_to_liquidate {
         let _ = liquidate_loan(*loan_id);
     }
-    
+
     loans_to_liquidate
 }
 
@@ -263,28 +263,28 @@ fn get_asset_current_value(asset: &CollateralAsset) -> f64 {
         AssetType::Collectible => 0.85, // Highly volatile
         AssetType::Other(_) => 0.90,    // Conservative default
     };
-    
+
     asset.verified_value_usd * depreciation_factor
 }
 
 fn liquidate_loan(loan_id: u64) -> Result<(), String> {
     LOANS.with(|loans| {
         let mut loans_map = loans.borrow_mut();
-        
+
         if let Some(mut loan) = loans_map.get(&loan_id) {
             if loan.status != LoanStatus::Active {
                 return Err("Loan is not active".to_string());
             }
-            
+
             loan.status = LoanStatus::Liquidated;
             loans_map.insert(loan_id, loan);
-            
+
             // In production, this would:
             // 1. Transfer collateral to lender
             // 2. Calculate liquidation fees
             // 3. Handle partial liquidation if needed
             // 4. Send notifications to borrower
-            
+
             Ok(())
         } else {
             Err("Loan not found".to_string())
@@ -299,7 +299,7 @@ fn heartbeat() {
     // In production, would limit frequency to avoid excessive calls
     static mut LAST_CHECK: u64 = 0;
     let current_time = ic_cdk::api::time();
-    
+
     unsafe {
         // Check liquidations every 5 minutes (300 seconds)
         if current_time - LAST_CHECK > 300_000_000_000 {
@@ -326,15 +326,16 @@ pub fn create_loan_offer(
     validate_loan_amount(max_loan_amount_usd)?;
     validate_interest_rate(interest_rate)?;
     validate_ltv_ratio(max_ltv_ratio)?;
-    
+
     if !(0.5..=1.0).contains(&min_verification_score) {
         return Err("Minimum verification score must be between 0.5-1.0".to_string());
     }
-    
-    if max_duration_days == 0 || max_duration_days > 1825 { // Max 5 years
+
+    if max_duration_days == 0 || max_duration_days > 1825 {
+        // Max 5 years
         return Err("Duration must be between 1 day and 5 years".to_string());
     }
-    
+
     if accepted_asset_types.is_empty() {
         return Err("Must accept at least one asset type".to_string());
     }
@@ -440,14 +441,17 @@ pub async fn request_loan(
         due_date: None,
         repaid_at: None,
         loan_to_value_ratio: ltv_ratio as f32,
-        liquidation_threshold: calculate_dynamic_liquidation_threshold(&asset_result.asset_type, ltv_ratio as f32),
+        liquidation_threshold: calculate_dynamic_liquidation_threshold(
+            &asset_result.asset_type,
+            ltv_ratio as f32,
+        ),
     };
 
     LOANS.with(|l| l.borrow_mut().insert(loan_id, loan));
-    
+
     // Set up automated monitoring for this loan
     setup_loan_monitoring(loan_id);
-    
+
     Ok(loan_id)
 }
 

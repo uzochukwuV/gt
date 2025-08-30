@@ -5,7 +5,16 @@ import { Card, Button } from "../components";
 import type { Identity, PrivacySettings } from "../../../declarations/backend";
 
 const IdentityManager = () => {
-  const { isAuthenticated, login, backendActor } = useAuth();
+  const { 
+    isAuthenticated, 
+    connectPlug, 
+    connectOisy, 
+    backendActor, 
+    walletType, 
+    plugAvailable, 
+    loading: walletLoading, 
+    error: walletError 
+  } = useAuth();
   const [identities, setIdentities] = useState<Identity[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -68,10 +77,61 @@ const IdentityManager = () => {
             Connect Your Wallet
           </h2>
           <p className="mb-6 text-gray-400">
-            Please connect your Internet Identity to manage your digital
-            identities.
+            Please connect your wallet to manage your digital identities.
           </p>
-          <Button onClick={login}>Connect Wallet</Button>
+          
+          {/* Wallet connection errors */}
+          {walletError && (
+            <div className="mb-4 rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700">
+              {walletError}
+            </div>
+          )}
+
+          <div className="space-y-4">
+            {/* Plug Wallet (Primary Option) */}
+            <div>
+              <Button 
+                onClick={connectPlug} 
+                disabled={!plugAvailable || walletLoading}
+                className="w-full"
+              >
+                {walletLoading ? "Connecting..." : "🔌 Connect with Plug Wallet"}
+              </Button>
+              {!plugAvailable && (
+                <p className="mt-2 text-xs text-gray-500">
+                  Plug wallet not detected. Please install the Plug browser extension.
+                </p>
+              )}
+            </div>
+
+            {/* Divider */}
+            <div className="flex items-center">
+              <div className="flex-1 border-t border-gray-600"></div>
+              <span className="mx-4 text-gray-400">or</span>
+              <div className="flex-1 border-t border-gray-600"></div>
+            </div>
+
+            {/* Oisy Wallet (Alternative Option) */}
+            <div>
+              <Button 
+                onClick={connectOisy} 
+                disabled={walletLoading}
+                className="w-full bg-gray-600 hover:bg-gray-700"
+              >
+                Connect with Oisy Wallet
+              </Button>
+              <p className="mt-2 text-xs text-gray-500">
+                Alternative wallet option with Internet Identity integration.
+              </p>
+            </div>
+          </div>
+
+          {/* Connection status */}
+          {walletLoading && (
+            <div className="mt-4 text-sm text-gray-400">
+              Waiting for wallet connection...
+            </div>
+          )}
         </div>
       </Layout>
     );
@@ -80,6 +140,24 @@ const IdentityManager = () => {
   return (
     <Layout>
       <div className="space-y-6">
+        {/* Wallet Status Indicator */}
+        <div className="rounded-lg bg-[#1b2127] p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <div className="h-2 w-2 rounded-full bg-green-500"></div>
+              <span className="text-sm text-gray-300">
+                Connected with {walletType === 'plug' ? '🔌 Plug' : 'Oisy'} Wallet
+              </span>
+            </div>
+            <button
+              onClick={() => { /* logout functionality will be handled by parent */ }}
+              className="text-sm text-red-400 hover:text-red-300"
+            >
+              Disconnect
+            </button>
+          </div>
+        </div>
+
         <Card title="Your Digital Identities">
           {error && (
             <div className="mb-4 rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700">

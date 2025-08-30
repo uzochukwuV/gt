@@ -226,7 +226,7 @@ fn validate_price(price: f64) -> Result<(), String> {
 }
 
 fn validate_verification_score(score: f32) -> Result<(), String> {
-    if score < 0.0 || score > 1.0 {
+    if !(0.0..=1.0).contains(&score) {
         return Err("Verification score must be between 0.0 and 1.0".to_string());
     }
     Ok(())
@@ -236,7 +236,7 @@ fn validate_expiration(expires_at: Option<u64>) -> Result<(), String> {
     if let Some(expiry) = expires_at {
         let current_time = ic_cdk::api::time();
         let max_future = current_time + (365 * 24 * 3600 * 1_000_000_000); // 1 year max
-        
+
         if expiry <= current_time {
             return Err("Expiration time must be in the future".to_string());
         }
@@ -259,7 +259,7 @@ pub async fn create_listing(
     cross_chain_settlement: Option<CrossChainNetwork>,
 ) -> Result<u64, String> {
     let caller = ic_cdk::api::caller();
-    
+
     // Validate inputs
     validate_price(price)?;
     validate_verification_score(minimum_verification_score)?;
@@ -275,7 +275,7 @@ pub async fn create_listing(
     if asset.owner != caller {
         return Err("Only asset owner can create listings".to_string());
     }
-    
+
     // Additional security checks
     if asset.verification_score < 0.5 {
         return Err("Asset verification score too low for marketplace".to_string());
@@ -373,7 +373,7 @@ pub fn get_listings(
 #[update]
 pub async fn create_order(listing_id: u64, amount: f64) -> Result<u64, String> {
     let caller = ic_cdk::api::caller();
-    
+
     // Validate order amount
     validate_price(amount)?;
 
