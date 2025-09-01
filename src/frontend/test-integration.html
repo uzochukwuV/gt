@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ICP Integration Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+        button { padding: 10px 20px; margin: 10px 0; background: #0066ff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #0052cc; }
+        .log { background: #f5f5f5; padding: 10px; margin: 10px 0; border-radius: 5px; font-family: monospace; white-space: pre-wrap; }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+    </style>
+</head>
+<body>
+    <h1>ICP Integration Test Page</h1>
+    
+    <div>
+        <h2>Environment Information</h2>
+        <div id="env-info" class="log"></div>
+    </div>
+
+    <div>
+        <h2>Wallet Connection Tests</h2>
+        <button onclick="testPlugConnection()">Test Plug Wallet</button>
+        <button onclick="testInternetIdentity()">Test Internet Identity</button>
+    </div>
+
+    <div>
+        <h2>Backend Canister Tests</h2>
+        <button onclick="testBackendConnection()">Test Backend Connection</button>
+        <button onclick="testCreateIdentity()">Test Create Identity</button>
+    </div>
+
+    <div>
+        <h2>Test Results</h2>
+        <div id="test-results" class="log"></div>
+    </div>
+
+    <script type="module">
+        // Environment info
+        const envInfo = document.getElementById('env-info');
+        envInfo.innerHTML = `
+DFX_NETWORK: ${import.meta.env.VITE_DFX_NETWORK || 'not set'}
+CANISTER_ID_BACKEND: ${import.meta.env.VITE_CANISTER_ID_BACKEND || 'not set'}
+CANISTER_ID_MARKETPLACE: ${import.meta.env.VITE_CANISTER_ID_MARKETPLACE || 'not set'}
+Host: ${window.location.host}
+Protocol: ${window.location.protocol}
+Plug Available: ${window.ic?.plug ? 'Yes' : 'No'}
+        `;
+
+        const log = (message, type = 'info') => {
+            const results = document.getElementById('test-results');
+            const timestamp = new Date().toLocaleTimeString();
+            results.innerHTML += `<span class="${type}">[${timestamp}] ${message}</span>\n`;
+            results.scrollTop = results.scrollHeight;
+        };
+
+        // Global test functions
+        window.testPlugConnection = async () => {
+            log('Testing Plug wallet connection...', 'info');
+            
+            try {
+                if (!window.ic?.plug) {
+                    throw new Error('Plug wallet not available');
+                }
+
+                log('Plug wallet detected', 'success');
+
+                const whitelist = [
+                    import.meta.env.VITE_CANISTER_ID_BACKEND,
+                    import.meta.env.VITE_CANISTER_ID_MARKETPLACE,
+                ].filter(Boolean);
+
+                log(`Requesting connection with whitelist: ${whitelist.join(', ')}`, 'info');
+
+                const connected = await window.ic.plug.requestConnect({
+                    whitelist,
+                    host: 'http://localhost:4943',
+                    timeout: 30000
+                });
+
+                if (connected) {
+                    const principal = await window.ic.plug.getPrincipal();
+                    log(`Plug connected successfully! Principal: ${principal.toString()}`, 'success');
+                } else {
+                    throw new Error('Connection denied');
+                }
+            } catch (error) {
+                log(`Plug connection failed: ${error.message}`, 'error');
+            }
+        };
+
+        window.testBackendConnection = async () => {
+            log('Testing backend canister connection...', 'info');
+
+            try {
+                // Import the actor creation functions
+                const { createActor, canisterId } = await import('./declarations/backend/index.js');
+                
+                log(`Backend canister ID: ${canisterId}`, 'info');
+
+                // Create actor without authentication first
+                const actor = createActor(canisterId, {
+                    agentOptions: {
+                        host: 'http://localhost:4943'
+                    }
+                });
+
+                log('Backend actor created', 'success');
+
+                // Test a simple query
+                const stats = await actor.get_identity_stats();
+                log(`Backend query successful: ${stats[0]} identities, ${stats[1]} total`, 'success');
+
+            } catch (error) {
+                log(`Backend connection failed: ${error.message}`, 'error');
+                console.error('Backend error details:', error);
+            }
+        };
+
+        window.testCreateIdentity = async () => {
+            log('Testing create_identity function...', 'info');
+
+            try {
+                if (!window.ic?.plug) {
+                    throw new Error('Please connect Plug wallet first');
+                }
+
+                const isConnected = await window.ic.plug.isConnected();
+                if (!isConnected) {
+                    throw new Error('Plug wallet not connected');
+                }
+
+                // Import IDL factory
+                const { idlFactory } = await import('./declarations/backend/backend.did.js');
+                const canisterId = import.meta.env.VITE_CANISTER_ID_BACKEND;
+
+                log('Creating Plug actor...', 'info');
+                const actor = window.ic.plug.createActor(canisterId, idlFactory);
+
+                // Test the create_identity function
+                const privacySettings = {
+                    default_privacy_level: { Private: null },
+                    public_credentials: [],
+                    cross_chain_visibility: []
+                };
+
+                const credential = {
+                    id: `test_${Date.now()}`,
+                    claims: {
+                        Public: [
+                            { claim_type: 'test', claim_value: 'test_value', verification_method: 'self_attested' }
+                        ]
+                    },
+                    status: { Active: null },
+                    subject: await window.ic.plug.getPrincipal(),
+                    issuer: {
+                        id: await window.ic.plug.getPrincipal(),
+                        name: 'Test',
+                        reputation_score: 1.0,
+                        did: []
+                    },
+                    expiration_date: [],
+                    proof: {
+                        created: BigInt(Date.now() * 1000000),
+                        signature: 'test_signature',
+                        public_key: (await window.ic.plug.getPrincipal()).toString(),
+                        proof_type: { Ed25519Signature: null }
+                    },
+                    issuance_date: BigInt(Date.now() * 1000000),
+                    credential_type: { Government: null }
+                };
+
+                log('Calling create_identity...', 'info');
+                const result = await actor.create_identity([], [credential], privacySettings);
+
+                if ('Ok' in result) {
+                    log(`Identity created successfully! ID: ${result.Ok}`, 'success');
+                } else {
+                    throw new Error(`Create identity failed: ${result.Err}`);
+                }
+
+            } catch (error) {
+                log(`Create identity test failed: ${error.message}`, 'error');
+                console.error('Create identity error details:', error);
+            }
+        };
+
+        window.testInternetIdentity = () => {
+            log('Internet Identity test not implemented yet', 'info');
+        };
+
+        log('Test page loaded successfully', 'success');
+    </script>
+</body>
+</html>

@@ -17,9 +17,11 @@
     "@slide-computer/signer": "^3.16.0",
     "@slide-computer/signer-agent": "^3.16.0",
     "@slide-computer/signer-web": "^3.16.0",
+    "clsx": "^2.1.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "react-router-dom": "^6.14.2"
+    "react-router-dom": "^6.14.2",
+    "tailwind-merge": "^2.5.4"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.1.7",

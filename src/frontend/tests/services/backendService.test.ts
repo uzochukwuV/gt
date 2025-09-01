@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { backendService } from "../../src/services/backendService";
+import { backendService } from "../../services/backendService";
 
 // Mock the backend module
 vi.mock("../../../declarations/backend", () => ({
